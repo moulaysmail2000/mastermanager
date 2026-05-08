@@ -125,8 +125,7 @@ export default function BankAccounts() {
     }
     if (t === "binance") {
       let msg = `Binance\n${a.beneficiary_name}`;
-      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
-      if (a.iban) msg += `\nUSDT (TRC20): ${a.iban}`;
+      if (a.account_number) msg += `\nID: ${a.account_number}`;
       return msg;
     }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
@@ -140,11 +139,6 @@ export default function BankAccounts() {
     if (t === "paypal") {
       let msg = `PayPal\n${a.beneficiary_name}`;
       if (a.account_number) msg += `\nEmail: ${a.account_number}`;
-      return msg;
-    }
-    if (t === "binance") {
-      let msg = `Binance\n${a.beneficiary_name}`;
-      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
       return msg;
     }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
@@ -193,10 +187,7 @@ export default function BankAccounts() {
           </>
         )}
         {t === "binance" && (
-          <>
-            <Input placeholder="Binance ID أو الإيميل" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
-            <Input placeholder="عنوان USDT (TRC20)" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
-          </>
+          <Input placeholder="Binance ID" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
         )}
       </div>
     );
@@ -335,9 +326,11 @@ function SortableAccountCard({
                 <Button size="sm" onClick={() => copy(formatFull(account))} className="gap-1.5 h-8 text-xs">
                   <Copy className="h-3 w-3" /> نسخ الكل
                 </Button>
-                <Button size="sm" variant="secondary" onClick={() => copy(formatWithoutRib(account))} className="gap-1.5 h-8 text-xs">
-                  <Copy className="h-3 w-3" /> بدون RIB
-                </Button>
+                {(account.account_type || "bank") === "bank" && (
+                  <Button size="sm" variant="secondary" onClick={() => copy(formatWithoutRib(account))} className="gap-1.5 h-8 text-xs">
+                    <Copy className="h-3 w-3" /> بدون RIB
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => startEdit(account)} className="gap-1.5 h-8 text-xs">
                   <Pencil className="h-3 w-3" /> تعديل
                 </Button>
