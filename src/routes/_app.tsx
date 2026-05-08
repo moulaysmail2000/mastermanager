@@ -40,7 +40,7 @@ function AppLayout() {
   const [refreshing, setRefreshing] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [order, setOrder] = useState<string[]>(() => {
-    if (typeof window === "undefined") return items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+    if (typeof window === "undefined") return items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
     try {
       const saved = JSON.parse(localStorage.getItem(NAV_ORDER_KEY) || "null");
       const defaultOrder = items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
