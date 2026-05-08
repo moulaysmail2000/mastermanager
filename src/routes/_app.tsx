@@ -176,7 +176,7 @@ function AppLayout() {
                 onDragLeave={() => setOverUrl((u) => (u === item.url ? null : u))}
                 onDrop={(e) => { e.preventDefault(); if (dragUrl) reorder(dragUrl, item.url); setDragUrl(null); setOverUrl(null); }}
                 onDragEnd={() => { setDragUrl(null); setOverUrl(null); }}
-                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url }); }}
+                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url as any }); }}
                 title={item.title}
                 className={cn(
                   "relative flex-1 flex items-center justify-center rounded-lg py-2 transition-colors duration-200",
@@ -214,7 +214,7 @@ function AppLayout() {
                 onDragLeave={() => setOverUrl((u) => (u === item.url ? null : u))}
                 onDrop={(e) => { e.preventDefault(); if (dragUrl) reorder(dragUrl, item.url); setDragUrl(null); setOverUrl(null); }}
                 onDragEnd={() => { setDragUrl(null); setOverUrl(null); }}
-                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url }); }}
+                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url as any }); }}
                 title={item.title}
                 className={cn(
                   "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200 cursor-grab active:cursor-grabbing",
