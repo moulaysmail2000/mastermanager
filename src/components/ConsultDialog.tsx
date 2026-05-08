@@ -49,8 +49,28 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
-      let acc = "";
+      let fullText = ""; // total received
+      let displayed = ""; // currently rendered
+      let streamDone = false;
       setMessages((p) => [...p, { role: "assistant", content: "" }]);
+
+      // Smooth typewriter: reveal characters at a steady pace,
+      // adapting speed to keep up with the buffer.
+      const typer = (async () => {
+        while (!streamDone || displayed.length < fullText.length) {
+          const remaining = fullText.length - displayed.length;
+          if (remaining === 0) {
+            await new Promise((r) => setTimeout(r, 20));
+            continue;
+          }
+          // adaptive: drain faster when buffer is large
+          const step = remaining > 80 ? 4 : remaining > 30 ? 2 : 1;
+          displayed = fullText.slice(0, displayed.length + step);
+          const snapshot = displayed;
+          setMessages((p) => p.map((m, i) => i === p.length - 1 ? { ...m, content: snapshot } : m));
+          await new Promise((r) => setTimeout(r, 12));
+        }
+      })();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -67,16 +87,15 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
           try {
             const parsed = JSON.parse(json);
             const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              acc += delta;
-              setMessages((p) => p.map((m, i) => i === p.length - 1 ? { ...m, content: acc } : m));
-            }
+            if (delta) fullText += delta;
           } catch {
             buf = line + "\n" + buf;
             break;
           }
         }
       }
+      streamDone = true;
+      await typer;
     } catch (e: any) {
       toast.error(e?.message || "خطأ");
     } finally {
