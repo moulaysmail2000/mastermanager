@@ -158,7 +158,30 @@ ${snapshot}`;
       return new Response(JSON.stringify({ error: "فشل المعالجة" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }});
     }
 
-    return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" }});
+    // Pipe through a TransformStream to force flush each chunk immediately (avoid buffering)
+    const { readable, writable } = new TransformStream();
+    (async () => {
+      const reader = response.body!.getReader();
+      const writer = writable.getWriter();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await writer.write(value);
+        }
+      } finally {
+        await writer.close();
+      }
+    })();
+    return new Response(readable, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+        "Connection": "keep-alive",
+      },
+    });
   } catch (e) {
     console.error("consult error:", e);
     return new Response(JSON.stringify({ error: "خطأ داخلي" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }});
