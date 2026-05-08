@@ -1,8 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Landmark, Tag, MonitorSmartphone, LogOut, PhoneOff, Wallet, Archive, Palette, Check, Sun, Moon, Users, LayoutDashboard, RefreshCw } from "lucide-react";
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useTheme, THEMES } from "@/hooks/useTheme";
@@ -26,6 +25,23 @@ const items = [
   { title: "Wallet", url: "/friend-accounts", icon: Users },
 ] as const;
 
+const NAV_ORDER_KEY = "nav_order_v1";
+const defaultOrder = items.map((i) => i.url);
+
+function loadOrder(): string[] {
+  if (typeof window === "undefined") return [...defaultOrder];
+  try {
+    const raw = localStorage.getItem(NAV_ORDER_KEY);
+    if (!raw) return [...defaultOrder];
+    const parsed = JSON.parse(raw) as string[];
+    const valid = parsed.filter((u) => defaultOrder.includes(u));
+    const missing = defaultOrder.filter((u) => !valid.includes(u));
+    return [...valid, ...missing];
+  } catch {
+    return [...defaultOrder];
+  }
+}
+
 function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +49,31 @@ function AppLayout() {
   const { theme, mode, setTheme, toggle } = useTheme();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [order, setOrder] = useState<string[]>(defaultOrder);
+  const [dragUrl, setDragUrl] = useState<string | null>(null);
+  const [overUrl, setOverUrl] = useState<string | null>(null);
+  const dragMovedRef = useRef(false);
+
+  useEffect(() => { setOrder(loadOrder()); }, []);
+
+  const orderedItems = order
+    .map((url) => items.find((i) => i.url === url))
+    .filter(Boolean) as Array<typeof items[number]>;
+
+  const reorder = (from: string, to: string) => {
+    if (from === to) return;
+    setOrder((prev) => {
+      const next = [...prev];
+      const fi = next.indexOf(from);
+      const ti = next.indexOf(to);
+      if (fi < 0 || ti < 0) return prev;
+      next.splice(fi, 1);
+      next.splice(ti, 0, from);
+      try { localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
+
   const handleRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
@@ -123,18 +164,27 @@ function AppLayout() {
       <div className="border-b border-border/30 bg-card/40 backdrop-blur-sm">
         {/* Mobile: distribute evenly across full width */}
         <nav className="flex sm:hidden items-center justify-between px-2 py-1.5 gap-1">
-          {items.map((item) => {
+          {orderedItems.map((item) => {
             const isActive = location.pathname === item.url;
+            const isOver = overUrl === item.url && dragUrl && dragUrl !== item.url;
             return (
               <button
                 key={item.url}
-                onClick={() => navigate({ to: item.url })}
+                draggable
+                onDragStart={(e) => { setDragUrl(item.url); dragMovedRef.current = false; e.dataTransfer.effectAllowed = "move"; }}
+                onDragOver={(e) => { e.preventDefault(); if (dragUrl && dragUrl !== item.url) { setOverUrl(item.url); dragMovedRef.current = true; } }}
+                onDragLeave={() => setOverUrl((u) => (u === item.url ? null : u))}
+                onDrop={(e) => { e.preventDefault(); if (dragUrl) reorder(dragUrl, item.url); setDragUrl(null); setOverUrl(null); }}
+                onDragEnd={() => { setDragUrl(null); setOverUrl(null); }}
+                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url }); }}
                 title={item.title}
                 className={cn(
                   "relative flex-1 flex items-center justify-center rounded-lg py-2 transition-colors duration-200",
                   isActive
                     ? "text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                  isOver && "ring-2 ring-primary/60",
+                  dragUrl === item.url && "opacity-40"
                 )}
               >
                 {isActive && (
@@ -152,18 +202,27 @@ function AppLayout() {
 
         {/* Desktop: original layout */}
         <nav className="hidden sm:flex gap-0.5 px-6 py-2 overflow-x-auto scrollbar-hide">
-          {items.filter(i => i.url !== "/friend-accounts").map((item) => {
+          {orderedItems.map((item) => {
             const isActive = location.pathname === item.url;
+            const isOver = overUrl === item.url && dragUrl && dragUrl !== item.url;
             return (
               <button
                 key={item.url}
-                onClick={() => navigate({ to: item.url })}
+                draggable
+                onDragStart={(e) => { setDragUrl(item.url); dragMovedRef.current = false; e.dataTransfer.effectAllowed = "move"; }}
+                onDragOver={(e) => { e.preventDefault(); if (dragUrl && dragUrl !== item.url) { setOverUrl(item.url); dragMovedRef.current = true; } }}
+                onDragLeave={() => setOverUrl((u) => (u === item.url ? null : u))}
+                onDrop={(e) => { e.preventDefault(); if (dragUrl) reorder(dragUrl, item.url); setDragUrl(null); setOverUrl(null); }}
+                onDragEnd={() => { setDragUrl(null); setOverUrl(null); }}
+                onClick={() => { if (!dragMovedRef.current) navigate({ to: item.url }); }}
                 title={item.title}
                 className={cn(
-                  "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200",
+                  "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200 cursor-grab active:cursor-grabbing",
                   isActive
                     ? "text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                  isOver && "ring-2 ring-primary/60",
+                  dragUrl === item.url && "opacity-40"
                 )}
               >
                 {isActive && (
@@ -178,32 +237,6 @@ function AppLayout() {
               </button>
             );
           })}
-          {(() => {
-            const wallet = items.find(i => i.url === "/friend-accounts")!;
-            const isActive = location.pathname === wallet.url;
-            return (
-              <button
-                onClick={() => navigate({ to: wallet.url })}
-                title={wallet.title}
-                className={cn(
-                  "mr-auto relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200",
-                  isActive
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                )}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-active-desktop"
-                    className="absolute inset-0 bg-primary rounded-lg shadow-sm shadow-primary/20"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <wallet.icon className="relative h-4 w-4 shrink-0" />
-                <span className="relative">{wallet.title}</span>
-              </button>
-            );
-          })()}
         </nav>
       </div>
 
