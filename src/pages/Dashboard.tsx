@@ -330,12 +330,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/15 via-card to-card p-5 sm:p-7">
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/15 via-card to-card p-3 sm:p-7">
         <div className="absolute -top-16 -left-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute -bottom-20 -right-10 h-56 w-56 rounded-full bg-info/15 blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
               <Badge variant="secondary" className="gap-1.5">
                 <Sparkles className="h-3 w-3" /> لوحة التحكم
               </Badge>
@@ -343,10 +343,10 @@ export default function Dashboard() {
                 context={`مداخيل الشهر: ${stats.income} | مصاريف الشهر: ${stats.expense} | الربح: ${stats.profit} | حسابات CapCut: ${stats.totalAccounts} (متاح: ${stats.availableAccounts}) | أرقام لم تُدفع: ${stats.unpaidCount}`}
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
               نظرة عامة على نشاطك
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
               مرحبًا بعودتك — إليك ملخص أداء متجرك لهذا الشهر.
             </p>
             <MotivationalQuotes todayIncome={stats.todayIncome} todayExpense={stats.todayExpense} yesterdayIncome={stats.yesterdayIncome} yesterdayExpense={stats.yesterdayExpense} monthIncome={stats.income} monthExpense={stats.expense} unpaid={stats.unpaidCount} />
