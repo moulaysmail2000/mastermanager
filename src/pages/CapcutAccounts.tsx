@@ -296,6 +296,7 @@ export default function CapcutAccounts() {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
   const getCategoryCount = (categoryId: string) => accounts.filter(a => a.category_id === categoryId).length;
+  const uncategorizedCount = accounts.filter(a => a.category_id === null).length;
 
   return (
     <div className="space-y-5" dir="rtl">
@@ -377,6 +378,27 @@ export default function CapcutAccounts() {
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedIds(new Set()); setSelectionMode(false); }}>
         <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
           <TabsList className="inline-flex flex-row-reverse h-auto gap-1.5 bg-transparent p-0">
+            {uncategorizedCount > 0 && (
+              <TabsTrigger
+                value={UNCAT}
+                className={cn(
+                  "relative text-xs font-medium px-3 py-1.5 rounded-lg border flex flex-row-reverse items-center gap-1.5 transition-all",
+                  activeTab === UNCAT
+                    ? "bg-warning text-warning-foreground border-warning shadow-sm"
+                    : "bg-card text-muted-foreground border-warning/40 hover:border-warning/70 hover:text-foreground"
+                )}
+              >
+                <span className="flex items-center gap-1">
+                  <span>بدون تصنيف</span>
+                  <span className={cn(
+                    "inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded text-[9px] font-bold",
+                    activeTab === UNCAT ? "bg-warning-foreground/20" : "bg-warning/20 text-warning"
+                  )}>
+                    {uncategorizedCount}
+                  </span>
+                </span>
+              </TabsTrigger>
+            )}
             {categories.map((cat) => {
               const count = getCategoryCount(cat.id);
               const isActive = activeTab === cat.id;
