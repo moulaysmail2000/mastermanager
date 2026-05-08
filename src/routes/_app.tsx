@@ -199,7 +199,7 @@ function AppLayout() {
                     item={item}
                     isActive={location.pathname === item.url}
                     reorderMode={reorderMode}
-                    onClick={() => navigate({ to: item.url })}
+                    onClick={() => navigate({ to: item.url as any })}
                   />
                 ))}
               </div>
@@ -210,7 +210,7 @@ function AppLayout() {
             const isActive = location.pathname === wallet.url;
             return (
               <button
-                onClick={() => navigate({ to: wallet.url })}
+                onClick={() => navigate({ to: wallet.url as any })}
                 title={wallet.title}
                 className={cn(
                   "mr-auto relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
