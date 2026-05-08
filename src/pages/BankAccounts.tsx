@@ -326,9 +326,11 @@ function SortableAccountCard({
                 <Button size="sm" onClick={() => copy(formatFull(account))} className="gap-1.5 h-8 text-xs">
                   <Copy className="h-3 w-3" /> نسخ الكل
                 </Button>
-                <Button size="sm" variant="secondary" onClick={() => copy(formatWithoutRib(account))} className="gap-1.5 h-8 text-xs">
-                  <Copy className="h-3 w-3" /> بدون RIB
-                </Button>
+                {(account.account_type || "bank") === "bank" && (
+                  <Button size="sm" variant="secondary" onClick={() => copy(formatWithoutRib(account))} className="gap-1.5 h-8 text-xs">
+                    <Copy className="h-3 w-3" /> بدون RIB
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => startEdit(account)} className="gap-1.5 h-8 text-xs">
                   <Pencil className="h-3 w-3" /> تعديل
                 </Button>
