@@ -360,6 +360,16 @@ export default function CapcutAccounts() {
               <Trash2 className="h-3 w-3" /> حذف {selectedIds.size}
             </button>
           )}
+          {selectedIds.size > 0 && activeTab === UNCAT && categories.length > 0 && (
+            <Select onValueChange={(v) => moveBulkMutation.mutate({ ids: Array.from(selectedIds), category_id: v })}>
+              <SelectTrigger className="h-7 w-auto gap-1 text-[10px] sm:text-xs px-2 sm:px-3 shrink-0">
+                <SelectValue placeholder={`نقل ${selectedIds.size} إلى...`} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -521,6 +531,16 @@ export default function CapcutAccounts() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex flex-row-reverse items-center justify-center gap-1.5">
+                              {activeTab === UNCAT && categories.length > 0 && (
+                                <Select onValueChange={(v) => moveAccountMutation.mutate({ id: a.id, category_id: v })}>
+                                  <SelectTrigger className="h-8 w-[110px] text-[10px]">
+                                    <SelectValue placeholder="نقل إلى..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              )}
                               <Button size="icon" variant="ghost" className="h-10 w-10 text-primary hover:text-primary [&_svg]:size-5" onClick={() => handleDeliver(a)} disabled={isSold || isNotWorking} title="نسخ الرسالة">
                                 <MessageSquare />
                               </Button>
