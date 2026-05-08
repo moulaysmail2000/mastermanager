@@ -85,6 +85,31 @@ export default function CapcutAccounts() {
     }
   }, [categories]);
 
+  const UNCAT = "__uncategorized__";
+  const moveAccountMutation = useMutation({
+    mutationFn: async ({ id, category_id }: { id: string; category_id: string }) => {
+      const { error } = await supabase.from("capcut_accounts").update({ category_id }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
+      toast.success("تم نقل الحساب");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const moveBulkMutation = useMutation({
+    mutationFn: async ({ ids, category_id }: { ids: string[]; category_id: string }) => {
+      const { error } = await supabase.from("capcut_accounts").update({ category_id }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
+      setSelectedIds(new Set());
+      toast.success("تم النقل");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const { data: settings } = useQuery({
     queryKey: ["user_settings"],
     queryFn: async () => {
@@ -247,7 +272,12 @@ export default function CapcutAccounts() {
   const isCerackCategory = activeCategoryName.includes("CERACK") || activeCategoryName.includes("CERACH");
 
   const filtered = accounts.filter((a) => {
-    const matchesCategory = !activeTab || a.category_id === activeTab;
+    const matchesCategory =
+      !activeTab
+        ? true
+        : activeTab === UNCAT
+        ? a.category_id === null
+        : a.category_id === activeTab;
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     return matchesCategory && matchesStatus;
   }).sort((a, b) => {
