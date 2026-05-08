@@ -43,7 +43,7 @@ function AppLayout() {
     if (typeof window === "undefined") return items.filter(i => i.url !== WALLET_URL).map(i => i.url);
     try {
       const saved = JSON.parse(localStorage.getItem(NAV_ORDER_KEY) || "null");
-      const defaultOrder = items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+      const defaultOrder = items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
       if (Array.isArray(saved)) {
         const valid = saved.filter((u: string) => defaultOrder.includes(u));
         const missing = defaultOrder.filter(u => !valid.includes(u));
@@ -51,12 +51,12 @@ function AppLayout() {
       }
       return defaultOrder;
     } catch {
-      return items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+      return items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
     }
   });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const itemsByUrl = new Map(items.map(i => [i.url, i]));
+  const itemsByUrl = new Map<string, typeof items[number]>(items.map(i => [i.url as string, i]));
   const orderedItems = order.map(u => itemsByUrl.get(u)!).filter(Boolean);
 
   const handleDragEnd = (e: DragEndEvent) => {
