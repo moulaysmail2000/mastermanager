@@ -85,6 +85,31 @@ export default function CapcutAccounts() {
     }
   }, [categories]);
 
+  const UNCAT = "__uncategorized__";
+  const moveAccountMutation = useMutation({
+    mutationFn: async ({ id, category_id }: { id: string; category_id: string }) => {
+      const { error } = await supabase.from("capcut_accounts").update({ category_id }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
+      toast.success("تم نقل الحساب");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const moveBulkMutation = useMutation({
+    mutationFn: async ({ ids, category_id }: { ids: string[]; category_id: string }) => {
+      const { error } = await supabase.from("capcut_accounts").update({ category_id }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
+      setSelectedIds(new Set());
+      toast.success("تم النقل");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const { data: settings } = useQuery({
     queryKey: ["user_settings"],
     queryFn: async () => {
@@ -247,7 +272,12 @@ export default function CapcutAccounts() {
   const isCerackCategory = activeCategoryName.includes("CERACK") || activeCategoryName.includes("CERACH");
 
   const filtered = accounts.filter((a) => {
-    const matchesCategory = !activeTab || a.category_id === activeTab;
+    const matchesCategory =
+      !activeTab
+        ? true
+        : activeTab === UNCAT
+        ? a.category_id === null
+        : a.category_id === activeTab;
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     return matchesCategory && matchesStatus;
   }).sort((a, b) => {
@@ -266,6 +296,7 @@ export default function CapcutAccounts() {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
   const getCategoryCount = (categoryId: string) => accounts.filter(a => a.category_id === categoryId).length;
+  const uncategorizedCount = accounts.filter(a => a.category_id === null).length;
 
   return (
     <div className="space-y-5" dir="rtl">
@@ -329,6 +360,16 @@ export default function CapcutAccounts() {
               <Trash2 className="h-3 w-3" /> حذف {selectedIds.size}
             </button>
           )}
+          {selectedIds.size > 0 && activeTab === UNCAT && categories.length > 0 && (
+            <Select onValueChange={(v) => moveBulkMutation.mutate({ ids: Array.from(selectedIds), category_id: v })}>
+              <SelectTrigger className="h-7 w-auto gap-1 text-[10px] sm:text-xs px-2 sm:px-3 shrink-0">
+                <SelectValue placeholder={`نقل ${selectedIds.size} إلى...`} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -347,6 +388,27 @@ export default function CapcutAccounts() {
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedIds(new Set()); setSelectionMode(false); }}>
         <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
           <TabsList className="inline-flex flex-row-reverse h-auto gap-1.5 bg-transparent p-0">
+            {uncategorizedCount > 0 && (
+              <TabsTrigger
+                value={UNCAT}
+                className={cn(
+                  "relative text-xs font-medium px-3 py-1.5 rounded-lg border flex flex-row-reverse items-center gap-1.5 transition-all",
+                  activeTab === UNCAT
+                    ? "bg-warning text-warning-foreground border-warning shadow-sm"
+                    : "bg-card text-muted-foreground border-warning/40 hover:border-warning/70 hover:text-foreground"
+                )}
+              >
+                <span className="flex items-center gap-1">
+                  <span>بدون تصنيف</span>
+                  <span className={cn(
+                    "inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded text-[9px] font-bold",
+                    activeTab === UNCAT ? "bg-warning-foreground/20" : "bg-warning/20 text-warning"
+                  )}>
+                    {uncategorizedCount}
+                  </span>
+                </span>
+              </TabsTrigger>
+            )}
             {categories.map((cat) => {
               const count = getCategoryCount(cat.id);
               const isActive = activeTab === cat.id;
@@ -469,6 +531,16 @@ export default function CapcutAccounts() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex flex-row-reverse items-center justify-center gap-1.5">
+                              {activeTab === UNCAT && categories.length > 0 && (
+                                <Select onValueChange={(v) => moveAccountMutation.mutate({ id: a.id, category_id: v })}>
+                                  <SelectTrigger className="h-8 w-[110px] text-[10px]">
+                                    <SelectValue placeholder="نقل إلى..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              )}
                               <Button size="icon" variant="ghost" className="h-10 w-10 text-primary hover:text-primary [&_svg]:size-5" onClick={() => handleDeliver(a)} disabled={isSold || isNotWorking} title="نسخ الرسالة">
                                 <MessageSquare />
                               </Button>
