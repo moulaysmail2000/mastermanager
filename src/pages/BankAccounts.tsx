@@ -339,7 +339,7 @@ function SortableAccountCard({
           ) : (
             <div className="space-y-3">
               {(account.account_type === "binance" || account.account_type === "paypal") && (
-                <div className="flex justify-center pb-1">
+                <div className="flex justify-start pb-1">
                   {account.account_type === "binance" ? (
                     <BinanceLogo className="h-7 w-auto" />
                   ) : (
