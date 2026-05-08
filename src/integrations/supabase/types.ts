@@ -47,6 +47,7 @@ export type Database = {
           iban: string
           id: string
           notes: string | null
+          sort_order: number
           updated_at: string
           user_id: string
         }
@@ -58,6 +59,7 @@ export type Database = {
           iban?: string
           id?: string
           notes?: string | null
+          sort_order?: number
           updated_at?: string
           user_id: string
         }
@@ -69,6 +71,7 @@ export type Database = {
           iban?: string
           id?: string
           notes?: string | null
+          sort_order?: number
           updated_at?: string
           user_id?: string
         }
