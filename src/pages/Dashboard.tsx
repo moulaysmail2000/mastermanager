@@ -330,7 +330,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/15 via-card to-card p-3 sm:p-7">
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/15 via-card to-card px-3 pt-2 pb-3 sm:p-7">
         <div className="absolute -top-16 -left-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute -bottom-20 -right-10 h-56 w-56 rounded-full bg-info/15 blur-3xl" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
