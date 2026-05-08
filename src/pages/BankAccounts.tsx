@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Copy, Pencil, Save, X, Trash2, Landmark, GripVertical, Move } from "lucide-react";
+import { Plus, Copy, Pencil, Save, X, Trash2, Landmark, GripVertical, Move, Wallet, Bitcoin } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -21,6 +21,15 @@ type BankAccount = {
   beneficiary_name: string;
   notes: string | null;
   sort_order?: number;
+  account_type?: string;
+};
+
+type AcctType = "bank" | "paypal" | "binance";
+
+const TYPE_META: Record<AcctType, { label: string; icon: any }> = {
+  bank: { label: "بنكي", icon: Landmark },
+  paypal: { label: "PayPal", icon: Wallet },
+  binance: { label: "Binance", icon: Bitcoin },
 };
 
 export default function BankAccounts() {
@@ -30,7 +39,7 @@ export default function BankAccounts() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<BankAccount>>({});
   const [adding, setAdding] = useState(false);
-  const [newData, setNewData] = useState<Partial<BankAccount>>({ bank_name: "", account_number: "", iban: "", beneficiary_name: "" });
+  const [newData, setNewData] = useState<Partial<BankAccount>>({ bank_name: "", account_number: "", iban: "", beneficiary_name: "", account_type: "bank" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [orderedIds, setOrderedIds] = useState<string[] | null>(null);
@@ -57,7 +66,7 @@ export default function BankAccounts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bank_accounts"] });
       setEditingId(null); setEditData({}); setAdding(false);
-      setNewData({ bank_name: "", account_number: "", iban: "", beneficiary_name: "" });
+      setNewData({ bank_name: "", account_number: "", iban: "", beneficiary_name: "", account_type: "bank" });
       toast.success("تم الحفظ");
     },
     onError: (e: any) => toast.error(e.message),
@@ -107,13 +116,37 @@ export default function BankAccounts() {
   };
 
   const formatFull = (a: BankAccount) => {
+    const t = (a.account_type || "bank") as AcctType;
+    if (t === "paypal") {
+      let msg = `PayPal\n${a.beneficiary_name}`;
+      if (a.account_number) msg += `\nEmail: ${a.account_number}`;
+      if (a.iban) msg += `\n${a.iban}`;
+      return msg;
+    }
+    if (t === "binance") {
+      let msg = `Binance\n${a.beneficiary_name}`;
+      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
+      if (a.iban) msg += `\nUSDT (TRC20): ${a.iban}`;
+      return msg;
+    }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
     if (a.account_number) msg += `\nN.Compt ${a.account_number}`;
-    msg += `\nRIB ${a.iban}`;
+    if (a.iban) msg += `\nRIB ${a.iban}`;
     return msg;
   };
 
   const formatWithoutRib = (a: BankAccount) => {
+    const t = (a.account_type || "bank") as AcctType;
+    if (t === "paypal") {
+      let msg = `PayPal\n${a.beneficiary_name}`;
+      if (a.account_number) msg += `\nEmail: ${a.account_number}`;
+      return msg;
+    }
+    if (t === "binance") {
+      let msg = `Binance\n${a.beneficiary_name}`;
+      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
+      return msg;
+    }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
     if (a.account_number) msg += `\nN.Compt ${a.account_number}`;
     return msg;
@@ -121,14 +154,53 @@ export default function BankAccounts() {
 
   const startEdit = (a: BankAccount) => { setEditingId(a.id); setEditData({ ...a }); };
 
-  const fields = (data: Partial<BankAccount>, setData: (d: Partial<BankAccount>) => void) => (
-    <div className="space-y-2.5">
-      <Input placeholder="اسم البنك" value={data.bank_name || ""} onChange={(e) => setData({ ...data, bank_name: e.target.value })} className="h-9 text-sm" />
-      <Input placeholder="اسم صاحب الحساب" value={data.beneficiary_name || ""} onChange={(e) => setData({ ...data, beneficiary_name: e.target.value })} className="h-9 text-sm" />
-      <Input placeholder="رقم الحساب (اختياري)" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
-      <Input placeholder="RIB" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
-    </div>
-  );
+  const fields = (data: Partial<BankAccount>, setData: (d: Partial<BankAccount>) => void) => {
+    const t = ((data.account_type as AcctType) || "bank");
+    return (
+      <div className="space-y-2.5">
+        <div className="flex gap-1.5">
+          {(Object.keys(TYPE_META) as AcctType[]).map((k) => {
+            const Icon = TYPE_META[k].icon;
+            const active = t === k;
+            return (
+              <Button
+                key={k}
+                type="button"
+                size="sm"
+                variant={active ? "default" : "outline"}
+                onClick={() => setData({ ...data, account_type: k, ...(k !== "bank" ? { bank_name: TYPE_META[k].label } : {}) })}
+                className="gap-1.5 h-8 text-xs flex-1"
+              >
+                <Icon className="h-3.5 w-3.5" /> {TYPE_META[k].label}
+              </Button>
+            );
+          })}
+        </div>
+        {t === "bank" && (
+          <Input placeholder="اسم البنك" value={data.bank_name || ""} onChange={(e) => setData({ ...data, bank_name: e.target.value })} className="h-9 text-sm" />
+        )}
+        <Input placeholder={t === "binance" ? "اسم صاحب الحساب" : "اسم صاحب الحساب"} value={data.beneficiary_name || ""} onChange={(e) => setData({ ...data, beneficiary_name: e.target.value })} className="h-9 text-sm" />
+        {t === "bank" && (
+          <>
+            <Input placeholder="رقم الحساب (اختياري)" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
+            <Input placeholder="RIB" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
+          </>
+        )}
+        {t === "paypal" && (
+          <>
+            <Input placeholder="البريد الإلكتروني (PayPal)" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
+            <Input placeholder="ملاحظة إضافية (اختياري)" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
+          </>
+        )}
+        {t === "binance" && (
+          <>
+            <Input placeholder="Binance ID أو الإيميل" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
+            <Input placeholder="عنوان USDT (TRC20)" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5">
