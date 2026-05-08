@@ -9,38 +9,173 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppUnpaidNumbersRouteImport } from './routes/_app.unpaid-numbers'
+import { Route as AppPricesRouteImport } from './routes/_app.prices'
+import { Route as AppFriendAccountsRouteImport } from './routes/_app.friend-accounts'
+import { Route as AppFinanceArchiveRouteImport } from './routes/_app.finance-archive'
+import { Route as AppFinanceRouteImport } from './routes/_app.finance'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCapcutAccountsRouteImport } from './routes/_app.capcut-accounts'
+import { Route as AppBankAccountsRouteImport } from './routes/_app.bank-accounts'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppUnpaidNumbersRoute = AppUnpaidNumbersRouteImport.update({
+  id: '/unpaid-numbers',
+  path: '/unpaid-numbers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPricesRoute = AppPricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFriendAccountsRoute = AppFriendAccountsRouteImport.update({
+  id: '/friend-accounts',
+  path: '/friend-accounts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFinanceArchiveRoute = AppFinanceArchiveRouteImport.update({
+  id: '/finance-archive',
+  path: '/finance-archive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFinanceRoute = AppFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCapcutAccountsRoute = AppCapcutAccountsRouteImport.update({
+  id: '/capcut-accounts',
+  path: '/capcut-accounts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBankAccountsRoute = AppBankAccountsRouteImport.update({
+  id: '/bank-accounts',
+  path: '/bank-accounts',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/bank-accounts': typeof AppBankAccountsRoute
+  '/capcut-accounts': typeof AppCapcutAccountsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/finance': typeof AppFinanceRoute
+  '/finance-archive': typeof AppFinanceArchiveRoute
+  '/friend-accounts': typeof AppFriendAccountsRoute
+  '/prices': typeof AppPricesRoute
+  '/unpaid-numbers': typeof AppUnpaidNumbersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/bank-accounts': typeof AppBankAccountsRoute
+  '/capcut-accounts': typeof AppCapcutAccountsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/finance': typeof AppFinanceRoute
+  '/finance-archive': typeof AppFinanceArchiveRoute
+  '/friend-accounts': typeof AppFriendAccountsRoute
+  '/prices': typeof AppPricesRoute
+  '/unpaid-numbers': typeof AppUnpaidNumbersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/bank-accounts': typeof AppBankAccountsRoute
+  '/_app/capcut-accounts': typeof AppCapcutAccountsRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/finance': typeof AppFinanceRoute
+  '/_app/finance-archive': typeof AppFinanceArchiveRoute
+  '/_app/friend-accounts': typeof AppFriendAccountsRoute
+  '/_app/prices': typeof AppPricesRoute
+  '/_app/unpaid-numbers': typeof AppUnpaidNumbersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/bank-accounts'
+    | '/capcut-accounts'
+    | '/dashboard'
+    | '/finance'
+    | '/finance-archive'
+    | '/friend-accounts'
+    | '/prices'
+    | '/unpaid-numbers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/bank-accounts'
+    | '/capcut-accounts'
+    | '/dashboard'
+    | '/finance'
+    | '/finance-archive'
+    | '/friend-accounts'
+    | '/prices'
+    | '/unpaid-numbers'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/bank-accounts'
+    | '/_app/capcut-accounts'
+    | '/_app/dashboard'
+    | '/_app/finance'
+    | '/_app/finance-archive'
+    | '/_app/friend-accounts'
+    | '/_app/prices'
+    | '/_app/unpaid-numbers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +183,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/unpaid-numbers': {
+      id: '/_app/unpaid-numbers'
+      path: '/unpaid-numbers'
+      fullPath: '/unpaid-numbers'
+      preLoaderRoute: typeof AppUnpaidNumbersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/prices': {
+      id: '/_app/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof AppPricesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/friend-accounts': {
+      id: '/_app/friend-accounts'
+      path: '/friend-accounts'
+      fullPath: '/friend-accounts'
+      preLoaderRoute: typeof AppFriendAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/finance-archive': {
+      id: '/_app/finance-archive'
+      path: '/finance-archive'
+      fullPath: '/finance-archive'
+      preLoaderRoute: typeof AppFinanceArchiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/finance': {
+      id: '/_app/finance'
+      path: '/finance'
+      fullPath: '/finance'
+      preLoaderRoute: typeof AppFinanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/capcut-accounts': {
+      id: '/_app/capcut-accounts'
+      path: '/capcut-accounts'
+      fullPath: '/capcut-accounts'
+      preLoaderRoute: typeof AppCapcutAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/bank-accounts': {
+      id: '/_app/bank-accounts'
+      path: '/bank-accounts'
+      fullPath: '/bank-accounts'
+      preLoaderRoute: typeof AppBankAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppBankAccountsRoute: typeof AppBankAccountsRoute
+  AppCapcutAccountsRoute: typeof AppCapcutAccountsRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppFinanceRoute: typeof AppFinanceRoute
+  AppFinanceArchiveRoute: typeof AppFinanceArchiveRoute
+  AppFriendAccountsRoute: typeof AppFriendAccountsRoute
+  AppPricesRoute: typeof AppPricesRoute
+  AppUnpaidNumbersRoute: typeof AppUnpaidNumbersRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBankAccountsRoute: AppBankAccountsRoute,
+  AppCapcutAccountsRoute: AppCapcutAccountsRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppFinanceRoute: AppFinanceRoute,
+  AppFinanceArchiveRoute: AppFinanceArchiveRoute,
+  AppFriendAccountsRoute: AppFriendAccountsRoute,
+  AppPricesRoute: AppPricesRoute,
+  AppUnpaidNumbersRoute: AppUnpaidNumbersRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
