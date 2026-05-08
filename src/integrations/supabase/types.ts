@@ -41,6 +41,7 @@ export type Database = {
       bank_accounts: {
         Row: {
           account_number: string
+          account_type: string
           bank_name: string
           beneficiary_name: string
           created_at: string
@@ -53,6 +54,7 @@ export type Database = {
         }
         Insert: {
           account_number?: string
+          account_type?: string
           bank_name?: string
           beneficiary_name?: string
           created_at?: string
@@ -65,6 +67,7 @@ export type Database = {
         }
         Update: {
           account_number?: string
+          account_type?: string
           bank_name?: string
           beneficiary_name?: string
           created_at?: string
