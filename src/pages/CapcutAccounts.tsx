@@ -193,7 +193,7 @@ export default function CapcutAccounts() {
 
   const insertMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const categoryId = activeTab || null;
+      const categoryId = !activeTab || activeTab === UNCAT ? null : activeTab;
       const { error } = await supabase.from("capcut_accounts").insert({
         username: email.trim(), password_or_code: password, plan_type: "Pro", status: "متاح", user_id: user!.id, category_id: categoryId,
       });
