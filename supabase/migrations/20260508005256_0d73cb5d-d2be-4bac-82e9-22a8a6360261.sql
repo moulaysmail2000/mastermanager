@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.financial_transactions, public.capcut_accounts, public.bank_accounts, public.prices, public.unpaid_numbers, public.message_templates, public.account_categories, public.expiry_dates, public.friend_transactions, public.friend_accounts RESTART IDENTITY CASCADE;
