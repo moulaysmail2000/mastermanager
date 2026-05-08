@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Landmark, Tag, MonitorSmartphone, LogOut, PhoneOff, Wallet, Archive, Palette, Check, Sun, Moon, Users, LayoutDashboard, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -131,20 +130,13 @@ function AppLayout() {
                 onClick={() => navigate({ to: item.url })}
                 title={item.title}
                 className={cn(
-                  "relative flex-1 flex items-center justify-center rounded-lg py-2 transition-colors duration-200",
+                  "flex-1 flex items-center justify-center rounded-lg py-2 transition-all duration-200",
                   isActive
-                    ? "text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-active-mobile"
-                    className="absolute inset-0 bg-primary rounded-lg shadow-sm shadow-primary/20"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <item.icon className="relative h-5 w-5 shrink-0" />
+                <item.icon className="h-5 w-5 shrink-0" />
               </button>
             );
           })}
@@ -160,21 +152,14 @@ function AppLayout() {
                 onClick={() => navigate({ to: item.url })}
                 title={item.title}
                 className={cn(
-                  "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200",
+                  "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
                   isActive
-                    ? "text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-active-desktop"
-                    className="absolute inset-0 bg-primary rounded-lg shadow-sm shadow-primary/20"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <item.icon className="relative h-4 w-4 shrink-0" />
-                <span className="relative">{item.title}</span>
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span>{item.title}</span>
               </button>
             );
           })}
@@ -186,21 +171,14 @@ function AppLayout() {
                 onClick={() => navigate({ to: wallet.url })}
                 title={wallet.title}
                 className={cn(
-                  "mr-auto relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200",
+                  "mr-auto relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
                   isActive
-                    ? "text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-active-desktop"
-                    className="absolute inset-0 bg-primary rounded-lg shadow-sm shadow-primary/20"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <wallet.icon className="relative h-4 w-4 shrink-0" />
-                <span className="relative">{wallet.title}</span>
+                <wallet.icon className="h-4 w-4 shrink-0" />
+                <span>{wallet.title}</span>
               </button>
             );
           })()}
@@ -208,17 +186,7 @@ function AppLayout() {
       </div>
 
       <main className="flex-1 p-2 sm:p-4 md:p-6 max-w-7xl w-full mx-auto">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <Outlet />
       </main>
     </div>
   );
