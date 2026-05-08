@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Landmark, Tag, MonitorSmartphone, LogOut, PhoneOff, Wallet, Archive, Palette, Check, Sun, Moon, Users, LayoutDashboard, RefreshCw } from "lucide-react";
+import { Landmark, Tag, MonitorSmartphone, LogOut, PhoneOff, Wallet, Archive, Palette, Check, Sun, Moon, Users, LayoutDashboard, RefreshCw, Move, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -25,6 +28,9 @@ const items = [
   { title: "Wallet", url: "/friend-accounts", icon: Users },
 ] as const;
 
+const NAV_ORDER_KEY = "nav_order_v1";
+const WALLET_URL = "/friend-accounts";
+
 function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +38,37 @@ function AppLayout() {
   const { theme, mode, setTheme, toggle } = useTheme();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [order, setOrder] = useState<string[]>(() => {
+    if (typeof window === "undefined") return items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+    try {
+      const saved = JSON.parse(localStorage.getItem(NAV_ORDER_KEY) || "null");
+      const defaultOrder = items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+      if (Array.isArray(saved)) {
+        const valid = saved.filter((u: string) => defaultOrder.includes(u));
+        const missing = defaultOrder.filter(u => !valid.includes(u));
+        return [...valid, ...missing];
+      }
+      return defaultOrder;
+    } catch {
+      return items.filter(i => i.url !== WALLET_URL).map(i => i.url);
+    }
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const itemsByUrl = new Map(items.map(i => [i.url, i]));
+  const orderedItems = order.map(u => itemsByUrl.get(u)!).filter(Boolean);
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = order.indexOf(active.id as string);
+    const newIdx = order.indexOf(over.id as string);
+    const next = arrayMove(order, oldIdx, newIdx);
+    setOrder(next);
+    localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(next));
+  };
+
   const handleRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
@@ -69,6 +106,15 @@ function AppLayout() {
             <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight">Master Manager</h1>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant={reorderMode ? "default" : "ghost"}
+              size="sm"
+              className="hidden md:inline-flex gap-1.5 h-8"
+              onClick={() => setReorderMode(v => !v)}
+              title="ترتيب القائمة"
+            >
+              <Move className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -144,25 +190,21 @@ function AppLayout() {
 
         {/* Desktop: original layout */}
         <nav className="hidden sm:flex gap-0.5 px-6 py-2 overflow-x-auto scrollbar-hide">
-          {items.filter(i => i.url !== "/friend-accounts").map((item) => {
-            const isActive = location.pathname === item.url;
-            return (
-              <button
-                key={item.url}
-                onClick={() => navigate({ to: item.url })}
-                title={item.title}
-                className={cn(
-                  "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                <span>{item.title}</span>
-              </button>
-            );
-          })}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={order} strategy={horizontalListSortingStrategy}>
+              <div className="flex gap-0.5">
+                {orderedItems.map((item) => (
+                  <SortableNavItem
+                    key={item.url}
+                    item={item}
+                    isActive={location.pathname === item.url}
+                    reorderMode={reorderMode}
+                    onClick={() => navigate({ to: item.url })}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
           {(() => {
             const wallet = items.find(i => i.url === "/friend-accounts")!;
             const isActive = location.pathname === wallet.url;
@@ -189,5 +231,43 @@ function AppLayout() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+function SortableNavItem({ item, isActive, reorderMode, onClick }: {
+  item: { title: string; url: string; icon: any };
+  isActive: boolean;
+  reorderMode: boolean;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.url,
+    disabled: !reorderMode,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const Icon = item.icon;
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...(reorderMode ? { ...attributes, ...listeners } : {})}
+      onClick={reorderMode ? undefined : onClick}
+      title={item.title}
+      className={cn(
+        "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
+        reorderMode && "cursor-grab active:cursor-grabbing ring-1 ring-primary/30",
+        isActive && !reorderMode
+          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+      )}
+    >
+      {reorderMode && <GripVertical className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+      <Icon className="h-4 w-4 shrink-0" />
+      <span>{item.title}</span>
+    </button>
   );
 }
