@@ -35,11 +35,11 @@ serve(async (req) => {
 
     // Fetch full snapshot in parallel
     const [tx, capcut, unpaid, friends, friendTx, banks, prices, expiry, cats] = await Promise.all([
-      supabase.from("financial_transactions").select("type,amount,description,transaction_date,archived").order("transaction_date", { ascending: false }).limit(500),
+      supabase.from("financial_transactions").select("type,amount,description,transaction_date,archived").order("transaction_date", { ascending: false }).limit(5000),
       supabase.from("capcut_accounts").select("plan_type,status,delivered_count,category_id"),
       supabase.from("unpaid_numbers").select("phone_number,status,created_at"),
       supabase.from("friend_accounts").select("owner_name,bank_name,balance"),
-      supabase.from("friend_transactions").select("type,amount,note,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("friend_transactions").select("type,amount,note,created_at").order("created_at", { ascending: false }).limit(2000),
       supabase.from("bank_accounts").select("bank_name,beneficiary_name"),
       supabase.from("prices").select("plan_type,price,currency"),
       supabase.from("expiry_dates").select("phone_number,start_date,expiry_date"),
@@ -111,19 +111,21 @@ ${Object.entries(byCat).map(([k,v])=>`- ${k}: ${v}`).join("\n")}
 ${pricesList || "لم تُسجَّل أسعار"}
 
 [الأرقام غير المدفوعة] العدد: ${(unpaid.data??[]).length}
-${(unpaid.data??[]).slice(0,10).map((u:any)=>`- ${u.phone_number} (${u.status})`).join("\n")}
+${(unpaid.data??[]).map((u:any)=>`- ${u.phone_number} (${u.status})`).join("\n")}
 
 [تواريخ الانتهاء] الإجمالي: ${expiryList.length} | تنتهي خلال 7 أيام: ${soonExpiring} | منتهية: ${expired}
 
 [حسابات الأصدقاء/الأمانات] العدد: ${friendsList.length} | إجمالي الأرصدة: ${totalFriendBalance.toFixed(2)}
-${friendsList.slice(0,10).map((f:any)=>`- ${f.owner_name} (${f.bank_name}): ${Number(f.balance).toFixed(2)}`).join("\n")}
-آخر معاملات الأصدقاء: ${(friendTx.data??[]).length}
+${friendsList.map((f:any)=>`- ${f.owner_name} (${f.bank_name}): ${Number(f.balance).toFixed(2)}`).join("\n")}
+
+معاملات الأصدقاء (${(friendTx.data??[]).length}):
+${(friendTx.data??[]).map((t:any,i:number)=>`${i+1}. ${t.created_at?.slice(0,10)} | ${t.type} | ${t.amount} | ${t.note||""}`).join("\n")}
 
 [الحسابات البنكية المسجلة] ${(banks.data??[]).length}
 ${(banks.data??[]).map((b:any)=>`- ${b.bank_name} (${b.beneficiary_name})`).join("\n")}
 
-آخر 15 معاملة مالية:
-${txList.slice(0,15).map((t:any)=>`- ${t.transaction_date} | ${t.type==="income"?"دخل":"مصروف"} | ${t.amount} | ${t.description||""}`).join("\n")}
+كل المعاملات المالية مرقّمة من الأحدث (${txList.length}):
+${txList.map((t:any,i:number)=>`${i+1}. ${t.transaction_date} | ${t.type==="income"?"دخل":"مصروف"} | ${t.amount} | ${t.description||""}`).join("\n")}
 `.trim();
 
     const systemPrompt = `أنت "مرشد البزنس" — مستشار حكيم خبير، عقل ناضج وحِسّ تجاري عالٍ، تتكلم كإنسان حي لا كآلة.
