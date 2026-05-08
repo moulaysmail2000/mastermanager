@@ -125,8 +125,7 @@ export default function BankAccounts() {
     }
     if (t === "binance") {
       let msg = `Binance\n${a.beneficiary_name}`;
-      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
-      if (a.iban) msg += `\nUSDT (TRC20): ${a.iban}`;
+      if (a.account_number) msg += `\nID: ${a.account_number}`;
       return msg;
     }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
@@ -140,11 +139,6 @@ export default function BankAccounts() {
     if (t === "paypal") {
       let msg = `PayPal\n${a.beneficiary_name}`;
       if (a.account_number) msg += `\nEmail: ${a.account_number}`;
-      return msg;
-    }
-    if (t === "binance") {
-      let msg = `Binance\n${a.beneficiary_name}`;
-      if (a.account_number) msg += `\nID/Email: ${a.account_number}`;
       return msg;
     }
     let msg = `${a.bank_name}\n${a.beneficiary_name}`;
@@ -193,10 +187,7 @@ export default function BankAccounts() {
           </>
         )}
         {t === "binance" && (
-          <>
-            <Input placeholder="Binance ID أو الإيميل" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
-            <Input placeholder="عنوان USDT (TRC20)" value={data.iban || ""} onChange={(e) => setData({ ...data, iban: e.target.value })} className="h-9 text-sm" />
-          </>
+          <Input placeholder="Binance ID" value={data.account_number || ""} onChange={(e) => setData({ ...data, account_number: e.target.value })} className="h-9 text-sm" />
         )}
       </div>
     );
