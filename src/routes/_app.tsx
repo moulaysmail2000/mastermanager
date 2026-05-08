@@ -26,7 +26,7 @@ const items = [
 ] as const;
 
 const NAV_ORDER_KEY = "nav_order_v1";
-const defaultOrder = items.map((i) => i.url);
+const defaultOrder: string[] = items.map((i) => i.url);
 
 function loadOrder(): string[] {
   if (typeof window === "undefined") return [...defaultOrder];
