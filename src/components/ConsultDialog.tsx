@@ -1,21 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Lightbulb, Loader2, Send, Sparkles, TrendingUp, Wallet, Target, Users, X } from "lucide-react";
+import { Lightbulb, Loader2, Send, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
-
-const QUICK_PROMPTS = [
-  { icon: TrendingUp, label: "تحليل أداء الشهر", prompt: "حلّل أداءي المالي لهذا الشهر مقارنة بالشهر السابق، واذكر نقاط القوة والضعف بالأرقام." },
-  { icon: Wallet, label: "كيف أزيد ربحي؟", prompt: "بناءً على بياناتي الحالية، اقترح 5 خطوات عملية لزيادة ربحي خلال 30 يوم القادمة." },
-  { icon: Target, label: "تسعير ذكي", prompt: "هل أسعاري الحالية مناسبة؟ اقترح استراتيجية تسعير أفضل لخططي." },
-  { icon: Users, label: "إدارة الأصدقاء/الأمانات", prompt: "راجع حسابات الأصدقاء والأمانات وأخبرني هل هناك مخاطر أو ديون متراكمة." },
-];
 
 export function ConsultDialog({ context: _ctx }: { context?: string }) {
   const [open, setOpen] = useState(false);
@@ -25,9 +17,7 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
 
   const send = async (text?: string) => {
@@ -53,7 +43,7 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
       if (!resp.ok || !resp.body) {
         if (resp.status === 429) throw new Error("تجاوزت حد الاستخدام، انتظر دقيقة.");
         if (resp.status === 402) throw new Error("نفد رصيد الذكاء الاصطناعي.");
-        throw new Error("فشل الاتصال بالمرشد");
+        throw new Error("فشل الاتصال");
       }
 
       const reader = resp.body.getReader();
@@ -89,7 +79,6 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
       }
     } catch (e: any) {
       toast.error(e?.message || "خطأ");
-      setMessages((p) => p.filter((_, i) => i !== p.length - 1 || p[p.length-1].role !== "assistant" || p[p.length-1].content));
     } finally {
       setLoading(false);
     }
@@ -100,153 +89,87 @@ export function ConsultDialog({ context: _ctx }: { context?: string }) {
       <DialogTrigger asChild>
         <button
           type="button"
-          title="مرشد البزنس الذكي"
-          className="group relative h-9 w-9 rounded-xl bg-gradient-to-br from-warning via-warning/80 to-amber-500 border border-warning/50 flex items-center justify-center text-white hover:scale-110 transition-all shadow-lg shadow-warning/30 hover:shadow-warning/60"
+          title="مرشد البزنس"
+          className="relative h-9 w-9 rounded-xl bg-warning/15 border border-warning/30 flex items-center justify-center text-warning hover:bg-warning/25 transition-colors"
         >
-          <Lightbulb className="h-4 w-4 drop-shadow" />
-          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
+          <Lightbulb className="h-4 w-4" />
+          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-warning animate-pulse" />
         </button>
       </DialogTrigger>
       <DialogContent
-        className="max-w-3xl p-0 gap-0 overflow-hidden h-[85vh] flex flex-col"
+        className="max-w-xl p-0 gap-0 overflow-hidden h-[80vh] flex flex-col"
         dir="rtl"
       >
-        {/* Header */}
-        <DialogHeader className="relative px-5 py-4 border-b bg-gradient-to-l from-warning/10 via-amber-500/5 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-warning to-amber-500 flex items-center justify-center shadow-lg shadow-warning/30">
-              <Sparkles className="h-5 w-5 text-white" />
+        <DialogHeader className="px-4 py-3 border-b">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-warning/15 flex items-center justify-center text-warning">
+              <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                مرشد البزنس
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  • متصل
-                </span>
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                يحلّل بياناتك الفعلية ويعطيك نصائح مخصصة
-              </p>
+              <DialogTitle className="text-base font-semibold text-right">مرشد البزنس</DialogTitle>
             </div>
             {messages.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMessages([])}
-                className="text-xs h-8"
-              >
-                محادثة جديدة
+              <Button variant="ghost" size="sm" onClick={() => setMessages([])} className="text-xs h-7">
+                جديدة
               </Button>
             )}
           </div>
         </DialogHeader>
 
-        {/* Body */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-gradient-to-b from-muted/20 to-transparent">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-5">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-warning to-amber-500 blur-2xl opacity-30 rounded-full" />
-                <div className="relative h-20 w-20 rounded-3xl bg-gradient-to-br from-warning to-amber-500 flex items-center justify-center shadow-2xl">
-                  <Lightbulb className="h-10 w-10 text-white" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold mb-1">كيف يمكنني مساعدتك اليوم؟</h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  أنا مرشدك الشخصي في البزنس. أعرف كل تفاصيل نظامك — مالياتك، حساباتك، أسعارك، ودينك. اسألني أي شيء.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl pt-2">
-                {QUICK_PROMPTS.map((q) => (
-                  <button
-                    key={q.label}
-                    onClick={() => send(q.prompt)}
-                    className="group text-right p-3 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-warning/40 hover:shadow-md transition-all flex items-start gap-3"
-                  >
-                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-warning/20 to-amber-500/10 flex items-center justify-center text-warning group-hover:scale-110 transition-transform shrink-0">
-                      <q.icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{q.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.prompt}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+              <Lightbulb className="h-10 w-10 mb-3 text-warning/60" />
+              <p className="text-sm">مرحباً، كيف يمكنني مساعدتك؟</p>
             </div>
           )}
 
           {messages.map((m, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-                m.role === "user" ? "justify-start flex-row-reverse" : "justify-start"
-              )}
-            >
+            <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
               <div className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center shrink-0 shadow",
+                "max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
                 m.role === "user"
-                  ? "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground"
-                  : "bg-gradient-to-br from-warning to-amber-500 text-white"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
               )}>
-                {m.role === "user" ? <span className="text-xs font-bold">أنت</span> : <Sparkles className="h-4 w-4" />}
-              </div>
-              <div className={cn(
-                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
-                m.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-tr-sm"
-                  : "bg-card border border-border/60 rounded-tl-sm shadow-sm"
-              )}>
-                <p className="whitespace-pre-wrap break-words">{m.content || (loading && i === messages.length-1 ? "..." : "")}</p>
+                {m.content || (loading && i === messages.length - 1 ? "..." : "")}
               </div>
             </div>
           ))}
 
           {loading && messages[messages.length-1]?.role === "user" && (
-            <div className="flex gap-3">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-warning to-amber-500 flex items-center justify-center shadow">
-                <Sparkles className="h-4 w-4 text-white animate-pulse" />
-              </div>
-              <div className="bg-card border border-border/60 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-warning animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="h-2 w-2 rounded-full bg-warning animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="h-2 w-2 rounded-full bg-warning animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex justify-start">
+              <div className="bg-muted rounded-2xl px-3.5 py-2.5 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           )}
         </div>
 
-        {/* Input */}
-        <div className="border-t bg-card/50 backdrop-blur p-3">
-          <div className="flex items-end gap-2 bg-background border border-border/80 rounded-2xl p-2 focus-within:border-warning/60 focus-within:ring-2 focus-within:ring-warning/20 transition-all">
+        <div className="border-t p-3">
+          <div className="flex items-end gap-2">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  send();
-                }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
-              placeholder="اسأل مرشدك عن أي شيء يخص بزنسك..."
+              placeholder="اكتب رسالتك..."
               rows={1}
-              className="flex-1 border-0 resize-none focus-visible:ring-0 shadow-none min-h-[40px] max-h-32 bg-transparent text-sm"
+              className="flex-1 resize-none min-h-[40px] max-h-32 text-sm rounded-xl"
               disabled={loading}
             />
             <Button
               onClick={() => send()}
               disabled={loading || !input.trim()}
               size="icon"
-              className="h-10 w-10 rounded-xl bg-gradient-to-br from-warning to-amber-500 hover:from-warning hover:to-amber-600 text-white shadow-lg shadow-warning/30 shrink-0"
+              className="h-10 w-10 rounded-xl shrink-0"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground text-center mt-2">
-            مرشد البزنس يقرأ بياناتك الحقيقية لإعطاء نصائح دقيقة • Enter للإرسال
-          </p>
         </div>
       </DialogContent>
     </Dialog>
