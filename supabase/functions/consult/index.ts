@@ -35,15 +35,15 @@ serve(async (req) => {
 
     // Fetch full snapshot in parallel
     const [tx, capcut, unpaid, friends, friendTx, banks, prices, expiry, cats] = await Promise.all([
-      supabase.from("financial_transactions").select("type,amount,description,transaction_date,archived").order("transaction_date", { ascending: false }).limit(5000),
-      supabase.from("capcut_accounts").select("plan_type,status,delivered_count,category_id"),
-      supabase.from("unpaid_numbers").select("phone_number,status,created_at"),
-      supabase.from("friend_accounts").select("owner_name,bank_name,balance"),
-      supabase.from("friend_transactions").select("type,amount,note,created_at").order("created_at", { ascending: false }).limit(2000),
-      supabase.from("bank_accounts").select("bank_name,beneficiary_name"),
-      supabase.from("prices").select("plan_type,price,currency"),
-      supabase.from("expiry_dates").select("phone_number,start_date,expiry_date"),
-      supabase.from("account_categories").select("id,name"),
+      supabase.from("financial_transactions").select("*").order("transaction_date", { ascending: false }).limit(100000),
+      supabase.from("capcut_accounts").select("*").limit(100000),
+      supabase.from("unpaid_numbers").select("*").limit(100000),
+      supabase.from("friend_accounts").select("*").limit(100000),
+      supabase.from("friend_transactions").select("*").order("created_at", { ascending: false }).limit(100000),
+      supabase.from("bank_accounts").select("*").limit(100000),
+      supabase.from("prices").select("*").limit(100000),
+      supabase.from("expiry_dates").select("*").limit(100000),
+      supabase.from("account_categories").select("*").limit(100000),
     ]);
 
     // Compute aggregates
