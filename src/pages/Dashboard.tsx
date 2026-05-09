@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ConsultDialog } from "@/components/ConsultDialog";
 import DailyStatsBar from "@/components/DailyStatsBar";
+import LiveClock from "@/components/LiveClock";
 import {
   AreaChart,
   Area,
@@ -367,6 +368,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <DailyStatsBar />
+            <LiveClock />
           </div>
         </div>
       </div>
