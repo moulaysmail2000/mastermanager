@@ -27,20 +27,36 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
     else if (hour < 17) timeContext = "الزوال";
     else if (hour < 21) timeContext = "المساء";
 
-    const systemPrompt = `أنت "المعلم"، مستشار أعمال محترف يراقب شاشة مبيعات المستخدم لحظة بلحظة. مهمتك إنتاج تحليل مالي حي بلغة تحفيزية راقية — كل نصيحة قراءة فعلية للأرقام، لا كلام عام.
+    // Allowed numbers the model may quote (everything else is hallucination)
+    const allowed = new Set<number>([
+      Math.round(data.todayIncome),
+      Math.round(data.todayExpense),
+      Math.round(todayProfit),
+      Math.round(data.yesterdayIncome),
+      Math.round(data.yesterdayExpense),
+      Math.round(yProfit),
+      Math.round(data.monthIncome),
+      Math.round(data.monthExpense),
+      Math.round(monthProfit),
+      data.unpaid,
+      0,
+    ]);
 
-اللغة: **عربية فصحى راقية فقط، بلا استثناء**. ممنوع منعاً قاطعاً أي كلمة بالدارجة المغربية أو المصرية أو الخليجية أو الإنجليزية أو الفرنسية. لا "دابا"، لا "يلا"، لا "خصك"، لا "كمل"، لا "تبارك الله"، لا "ok"، لا "business". استعمل دائماً: الآن، تابع، يجب عليك، واصل، أكمل، ما شاء الله، عملك، ربحك. الفصحى هي الأقوى في إيصال الرسالة.
+    const systemPrompt = `أنت "المعلم"، مستشار أعمال يقرأ لوحة تحكم المستخدم لحظياً. كل نصيحة يجب أن تكون قراءة دقيقة للأرقام الفعلية، لا كلام عام ولا أرقام مخترعة.
 
-قواعد إجبارية:
-- ادمج الأرقام الحقيقية حرفياً. مثال: "ربحك الآن ${todayProfit.toFixed(0)} درهم، واصل لتصل إلى ${(todayProfit + 70).toFixed(0)} قبل المساء".
-- استعمل الأرقام الفعلية فقط (اليوم، أمس، الشهر، غير المدفوعة) — لا تخترع أرقاماً.
-- كل نصيحة قراءة لحظية كأنك تشاهد لوحة التحكم الآن.
-- راعِ الوقت (${timeContext}): الصباح تحفيز للانطلاق، الظهيرة تركيز على الوتيرة، المساء/الليل حصيلة ومقارنة هادئة.
-- إذا الربح 0 صباحاً: طبيعي وحفّز. إذا 0 مساءً: نبّه بلطف.
-- قارن اليوم/أمس بنسب مئوية حين يمكن.
-- إذا الديون 0: امدح نظافة الحساب. إذا موجودة: حث على التحصيل بذكر الرقم.
+اللغة: **عربية فصحى راقية فقط**. ممنوع الدارجة أو الإنجليزية أو الفرنسية.
 
-أنتج 30 نصيحة قصيرة (10 إلى 20 كلمة)، كل واحدة في سطر منفصل، بدون ترقيم أو شرطات أو علامات اقتباس.`;
+قواعد صارمة (مخالفتها = نصيحة مرفوضة):
+1. لا تذكر أي رقم إلا إذا كان من القائمة الفعلية: ${[...allowed].join("، ")}.
+2. ممنوع اختراع أهداف رقمية أو توقعات (مثل "اوصل إلى 150"). استعمل فقط الأرقام الفعلية.
+3. إذا ذكرت الربح، يجب أن يكون الرقم = ${todayProfit.toFixed(0)} درهم بالضبط لربح اليوم.
+4. إذا ذكرت المداخيل اليوم، الرقم = ${data.todayIncome.toFixed(0)} درهم.
+5. إذا ذكرت المصاريف اليوم، الرقم = ${data.todayExpense.toFixed(0)} درهم.
+6. لا تقل "الربح 0" إذا كان الربح ${todayProfit.toFixed(0)}. لا تتناقض مع الأرقام أبداً.
+7. راعِ الوقت (${timeContext}).
+8. إذا الديون = 0: امدح. إذا > 0: نبّه بذكر الرقم.
+
+أنتج 25 نصيحة قصيرة (10 إلى 18 كلمة)، كل واحدة في سطر، بدون ترقيم ولا شرطات ولا علامات اقتباس.`;
 
     const userPrompt = `الوقت: ${timeContext} (${hour}:00)
 
@@ -58,7 +74,8 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
+        temperature: 0.4,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -73,10 +90,25 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
 
     const json = await res.json();
     const content: string = json?.choices?.[0]?.message?.content ?? "";
+
+    // Post-filter: drop quotes that contain numbers not in the allowed set
+    // (catches hallucinated targets / contradictions like "الربح 0" when it isn't).
+    const isAllowedNumber = (n: number) => {
+      for (const a of allowed) {
+        if (Math.abs(a - n) <= 1) return true; // tolerate rounding
+      }
+      return false;
+    };
+
     const quotes = content
       .split("\n")
       .map((l) => l.replace(/^[-*•\d.\)\s]+/, "").trim())
-      .filter((l) => l.length >= 8 && l.length <= 200);
+      .filter((l) => l.length >= 8 && l.length <= 200)
+      .filter((l) => {
+        const nums = l.match(/\d+(?:[.,]\d+)?/g);
+        if (!nums) return true;
+        return nums.every((s) => isAllowedNumber(Number(s.replace(",", "."))));
+      });
 
     return { quotes };
   });
