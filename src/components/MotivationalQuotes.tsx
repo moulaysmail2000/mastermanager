@@ -15,13 +15,13 @@ type Props = {
 };
 
 const QUOTE_DURATION = 6500;
-const CACHE_PREFIX = "mq_v4_";
-// Threshold: invalidate cache if today's profit changed by more than this
-const PROFIT_DELTA_THRESHOLD = 25;
+const CACHE_PREFIX = "mq_v5_";
 
 type CachedPayload = {
   quotes: string[];
   todayProfit: number;
+  todayIncome: number;
+  todayExpense: number;
   unpaid: number;
 };
 
@@ -78,7 +78,9 @@ export function MotivationalQuotes(props: Props) {
 
     if (
       cached &&
-      Math.abs(cached.todayProfit - todayProfit) < PROFIT_DELTA_THRESHOLD &&
+      cached.todayProfit === todayProfit &&
+      cached.todayIncome === props.todayIncome &&
+      cached.todayExpense === props.todayExpense &&
       cached.unpaid === props.unpaid
     ) {
       setQuotes(cached.quotes);
@@ -103,7 +105,13 @@ export function MotivationalQuotes(props: Props) {
         if (res?.quotes?.length) {
           setQuotes(res.quotes);
           setIndex(0);
-          writeCache(key, { quotes: res.quotes, todayProfit, unpaid: props.unpaid });
+          writeCache(key, {
+            quotes: res.quotes,
+            todayProfit,
+            todayIncome: props.todayIncome,
+            todayExpense: props.todayExpense,
+            unpaid: props.unpaid,
+          });
         }
       })
       .catch((e) => console.error("quotes generation failed", e))
@@ -111,7 +119,7 @@ export function MotivationalQuotes(props: Props) {
         inFlightRef.current = false;
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayProfit, props.unpaid]);
+  }, [todayProfit, props.todayIncome, props.todayExpense, props.unpaid]);
 
   useEffect(() => {
     if (quotes.length < 2) return;
