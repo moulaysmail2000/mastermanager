@@ -367,8 +367,10 @@ export default function Dashboard() {
                 <MonitorSmartphone className="h-4 w-4" /> الحسابات
               </Link>
             </div>
-            <DailyStatsBar />
-            <LiveClock />
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <LiveClock />
+              <DailyStatsBar />
+            </div>
           </div>
         </div>
       </div>
