@@ -368,7 +368,9 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-2 justify-end">
-              <LiveClock />
+              <div className="hidden sm:block">
+                <LiveClock />
+              </div>
               <DailyStatsBar />
             </div>
           </div>
