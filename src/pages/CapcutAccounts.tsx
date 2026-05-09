@@ -255,7 +255,7 @@ export default function CapcutAccounts() {
     await copy(textToCopy);
     const newCount = (account.delivered_count || 0) + 1;
     const newStatus = newCount >= 2 ? "مباع" : "متاح";
-    await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus }).eq("id", account.id);
+    await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
     toast.success(`تم النسخ (${newCount}/2)`);
   };
@@ -263,7 +263,7 @@ export default function CapcutAccounts() {
   const handleUndoDeliver = async (account: CapcutAccount) => {
     const newCount = Math.max(0, (account.delivered_count || 0) - 1);
     const newStatus = newCount < 2 ? "متاح" : "مباع";
-    await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus }).eq("id", account.id);
+    await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
     toast.success("تم التراجع");
   };
@@ -283,7 +283,16 @@ export default function CapcutAccounts() {
   }).sort((a, b) => {
     // delivered_count === 1 first (needs 2nd delivery), then 0 (unused), then 2+ (sold) last
     const priority = (count: number) => count === 1 ? 0 : count === 0 ? 1 : 2;
-    return priority(a.delivered_count) - priority(b.delivered_count);
+    const pa = priority(a.delivered_count);
+    const pb = priority(b.delivered_count);
+    if (pa !== pb) return pa - pb;
+    // Within sold (priority 2), most recently sold appears first (top of expired section)
+    if (pa === 2) {
+      const ua = new Date((a as any).updated_at || 0).getTime();
+      const ub = new Date((b as any).updated_at || 0).getTime();
+      return ub - ua;
+    }
+    return 0;
   });
 
   const allSelected = filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
