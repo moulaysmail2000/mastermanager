@@ -27,45 +27,59 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
     else if (hour < 17) timeContext = "الزوال";
     else if (hour < 21) timeContext = "المساء";
 
-    // Allowed numbers the model may quote (everything else is hallucination)
-    const allowed = new Set<number>([
-      Math.round(data.todayIncome),
-      Math.round(data.todayExpense),
-      Math.round(todayProfit),
-      Math.round(data.yesterdayIncome),
-      Math.round(data.yesterdayExpense),
-      Math.round(yProfit),
-      Math.round(data.monthIncome),
-      Math.round(data.monthExpense),
-      Math.round(monthProfit),
-      data.unpaid,
-      0,
-    ]);
+    // Exact allowed numeric values (rounded). Any other number = hallucination.
+    const tIn = Math.round(data.todayIncome);
+    const tEx = Math.round(data.todayExpense);
+    const tPr = Math.round(todayProfit);
+    const yIn = Math.round(data.yesterdayIncome);
+    const yEx = Math.round(data.yesterdayExpense);
+    const yPr = Math.round(yProfit);
+    const mIn = Math.round(data.monthIncome);
+    const mEx = Math.round(data.monthExpense);
+    const mPr = Math.round(monthProfit);
+    const unp = data.unpaid;
 
-    const systemPrompt = `أنت "المعلم"، مستشار أعمال يقرأ لوحة تحكم المستخدم لحظياً. كل نصيحة يجب أن تكون قراءة دقيقة للأرقام الفعلية، لا كلام عام ولا أرقام مخترعة.
+    const allowed = new Set<number>([tIn, tEx, tPr, yIn, yEx, yPr, mIn, mEx, mPr, unp, 0]);
 
-اللغة: **عربية فصحى راقية فقط**. ممنوع الدارجة أو الإنجليزية أو الفرنسية.
+    // Comparative facts the model can reference safely (no invented numbers)
+    const profitDirection =
+      tPr > yPr ? "ربح اليوم أعلى من أمس" : tPr < yPr ? "ربح اليوم أقل من أمس" : "ربح اليوم مساوٍ لأمس";
+    const incomeDirection =
+      tIn > yIn ? "مداخيل اليوم أعلى من أمس" : tIn < yIn ? "مداخيل اليوم أقل من أمس" : "مداخيل اليوم مساوية لأمس";
+    const profitState = tPr > 0 ? "اليوم رابح" : tPr < 0 ? "اليوم خاسر" : "اليوم متعادل";
+    const debtState = unp === 0 ? "لا توجد ديون" : `هناك ${unp} رقم غير مدفوع`;
 
-قواعد صارمة (مخالفتها = نصيحة مرفوضة):
-1. لا تذكر أي رقم إلا إذا كان من القائمة الفعلية: ${[...allowed].join("، ")}.
-2. ممنوع اختراع أهداف رقمية أو توقعات (مثل "اوصل إلى 150"). استعمل فقط الأرقام الفعلية.
-3. إذا ذكرت الربح، يجب أن يكون الرقم = ${todayProfit.toFixed(0)} درهم بالضبط لربح اليوم.
-4. إذا ذكرت المداخيل اليوم، الرقم = ${data.todayIncome.toFixed(0)} درهم.
-5. إذا ذكرت المصاريف اليوم، الرقم = ${data.todayExpense.toFixed(0)} درهم.
-6. لا تقل "الربح 0" إذا كان الربح ${todayProfit.toFixed(0)}. لا تتناقض مع الأرقام أبداً.
-7. راعِ الوقت (${timeContext}).
-8. إذا الديون = 0: امدح. إذا > 0: نبّه بذكر الرقم.
+    const systemPrompt = `أنت "المعلم"، مستشار أعمال عربي يقرأ لوحة تحكم المستخدم بدقة مطلقة. مهمتك إنتاج نصائح قصيرة مبنية حصراً على الأرقام الحقيقية أدناه.
 
-أنتج 25 نصيحة قصيرة (10 إلى 18 كلمة)، كل واحدة في سطر، بدون ترقيم ولا شرطات ولا علامات اقتباس.`;
+اللغة: عربية فصحى راقية فقط. ممنوع الدارجة، الإنجليزية، أو الفرنسية.
+
+قواعد لا يجوز خرقها أبداً:
+1) ممنوع منعاً باتاً ذكر أي رقم لا ينتمي حرفياً إلى هذه القائمة: ${[...allowed].join("، ")}.
+2) ممنوع اختراع أهداف، توقعات، نسب مئوية، أو متوسطات. لا "اوصل إلى ١٠٠"، لا "زد ٢٠٪".
+3) إذا ذكرت ربح اليوم فالرقم = ${tPr} درهم بالضبط. إذا ذكرت مداخيل اليوم فالرقم = ${tIn}. إذا ذكرت مصاريف اليوم فالرقم = ${tEx}.
+4) ممنوع التناقض مع الحقائق: ${profitState}، ${profitDirection}، ${incomeDirection}، ${debtState}.
+5) لا تقل "ربح صفر" إلا إذا كان ${tPr} = 0. لا تقل "خسارة" إلا إذا كان ${tPr} < 0.
+6) إذا لم تكن متأكداً من رقم، لا تذكر أي رقم في تلك النصيحة واكتفِ بنصيحة عامة دقيقة.
+7) راعِ الوقت الحالي: ${timeContext}.
+8) كل نصيحة من 8 إلى 16 كلمة، سطر واحد، بدون ترقيم أو رموز أو علامات اقتباس.
+
+أنتج 20 نصيحة دقيقة. كل سطر = نصيحة واحدة، ولا شيء آخر.`;
 
     const userPrompt = `الوقت: ${timeContext} (${hour}:00)
 
-اليوم: مداخيل ${data.todayIncome.toFixed(0)} درهم، مصاريف ${data.todayExpense.toFixed(0)} درهم، ربح ${todayProfit.toFixed(0)} درهم
-أمس: مداخيل ${data.yesterdayIncome.toFixed(0)} درهم، مصاريف ${data.yesterdayExpense.toFixed(0)} درهم، ربح ${yProfit.toFixed(0)} درهم
-الشهر: مداخيل ${data.monthIncome.toFixed(0)} درهم، مصاريف ${data.monthExpense.toFixed(0)} درهم، ربح ${monthProfit.toFixed(0)} درهم
-أرقام لم تُدفع: ${data.unpaid}
+الأرقام الحقيقية الوحيدة المسموح بها:
+- اليوم: مداخيل ${tIn}، مصاريف ${tEx}، ربح ${tPr}
+- أمس: مداخيل ${yIn}، مصاريف ${yEx}، ربح ${yPr}
+- الشهر: مداخيل ${mIn}، مصاريف ${mEx}، ربح ${mPr}
+- أرقام غير مدفوعة: ${unp}
 
-أنتج 30 نصيحة تحليلية حية تدمج هذه الأرقام مباشرة، سطر لكل نصيحة، لا شيء آخر.`;
+حقائق مقارنة جاهزة (استعملها كما هي دون أرقام إضافية):
+- ${profitState}
+- ${profitDirection}
+- ${incomeDirection}
+- ${debtState}
+
+اكتب 20 نصيحة دقيقة مبنية على هذه البيانات فقط.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -74,8 +88,8 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        temperature: 0.4,
+        model: "google/gemini-2.5-pro",
+        temperature: 0.2,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -100,6 +114,17 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
       return false;
     };
 
+    // Reject quotes that contradict facts even without numbers
+    const contradictsFacts = (l: string): boolean => {
+      const t = l.toLowerCase();
+      if (tPr > 0 && /(خسارة|خاسر|تراجع الربح إلى الصفر|ربح صفر|الربح صفر)/.test(l)) return true;
+      if (tPr < 0 && /(ربح ممتاز|أرباح جيدة|اليوم رابح)/.test(l)) return true;
+      if (tPr === 0 && /(ربح ممتاز|أرباح كبيرة)/.test(l)) return true;
+      if (unp === 0 && /(ديون متراكمة|سدد الديون|حصّل الديون|الديون المتأخرة)/.test(l)) return true;
+      if (unp > 0 && /(لا توجد ديون|خالٍ من الديون|بدون ديون)/.test(l)) return true;
+      return t.length === 0;
+    };
+
     const quotes = content
       .split("\n")
       .map((l) => l.replace(/^[-*•\d.\)\s]+/, "").trim())
@@ -108,7 +133,8 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
         const nums = l.match(/\d+(?:[.,]\d+)?/g);
         if (!nums) return true;
         return nums.every((s) => isAllowedNumber(Number(s.replace(",", "."))));
-      });
+      })
+      .filter((l) => !contradictsFacts(l));
 
     return { quotes };
   });
