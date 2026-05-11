@@ -790,6 +790,60 @@ export default function CapcutAccounts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* G2G Import Preview */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-2xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-4 w-4 text-primary" /> معاينة الاستيراد ({importRows.filter(r => r.selected).length}/{importRows.length})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">سيتم الإضافة إلى: <strong className="text-foreground">{categories.find(c => c.id === activeTab)?.name || "بدون تصنيف"}</strong></span>
+              <button
+                onClick={() => setImportRows(rows => rows.map(r => ({ ...r, selected: !rows.every(x => x.selected) })))}
+                className="text-primary hover:underline"
+              >
+                {importRows.every(r => r.selected) ? "إلغاء تحديد الكل" : "تحديد الكل"}
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto border border-border/50 rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead className="text-right text-xs">الإيميل</TableHead>
+                    <TableHead className="text-right text-xs">كلمة السر</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importRows.map((r, i) => (
+                    <TableRow key={i} className={cn(!r.selected && "opacity-40")}>
+                      <TableCell>
+                        <Checkbox checked={r.selected} onCheckedChange={() => setImportRows(rows => rows.map((x, j) => j === i ? { ...x, selected: !x.selected } : x))} />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{r.email}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{r.password}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={() => setImportDialogOpen(false)}>إلغاء</Button>
+              <Button
+                size="sm"
+                onClick={() => bulkInsertMutation.mutate(importRows.filter(r => r.selected))}
+                disabled={bulkInsertMutation.isPending || !importRows.some(r => r.selected)}
+              >
+                <Save className="h-3.5 w-3.5 ml-1" /> حفظ {importRows.filter(r => r.selected).length} حساب
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
