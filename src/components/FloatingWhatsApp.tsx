@@ -5,7 +5,6 @@ import { toast } from "sonner";
 const POS_KEY = "fw_pos_v1";
 const LAST_KEY = "fw_last_local_v1";
 const SIZE = 32;
-const COUNTRY_CODE = "212"; // Morocco
 
 export default function FloatingWhatsApp() {
   const [pos, setPos] = useState<{ x: number; y: number }>(() => {
@@ -61,19 +60,16 @@ export default function FloatingWhatsApp() {
   };
 
   const openWhatsApp = () => {
-    let local = num.replace(/\D/g, "");
-    if (!local) {
+    const full = num.replace(/\D/g, "");
+    if (!full) {
       toast.error("أدخل رقم الهاتف");
       return;
     }
-    // Normalize: drop leading 0 for local Moroccan numbers
-    if (local.startsWith("0")) local = local.slice(1);
-    if (local.length < 8) {
+    if (full.length < 8) {
       toast.error("الرقم قصير جداً");
       return;
     }
     localStorage.setItem(LAST_KEY, num);
-    const full = `${COUNTRY_CODE}${local}`;
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (isAndroid) {
       window.location.href = `intent://send/?phone=${full}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
@@ -130,26 +126,20 @@ export default function FloatingWhatsApp() {
             </div>
 
             <div className="w-full">
-              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">رقم الهاتف</label>
-              <div className="flex items-stretch rounded-xl overflow-hidden border border-border bg-muted/40 focus-within:ring-2 focus-within:ring-[#25D366]/40 focus-within:border-[#25D366]/40 transition-all" dir="ltr">
-                <div className="flex items-center gap-1.5 px-3 bg-muted border-l border-border text-sm font-semibold text-foreground">
-                  <span className="text-base leading-none">🇲🇦</span>
-                  <span>+212</span>
-                </div>
-                <input
-                  type="tel"
-                  dir="ltr"
-                  inputMode="numeric"
-                  autoFocus
-                  value={num}
-                  onChange={(e) => setNum(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") openWhatsApp(); }}
-                  placeholder="0621256548"
-                  className="flex-1 bg-transparent px-3 py-2.5 text-foreground text-sm tracking-wide placeholder:text-muted-foreground/60 focus:outline-none"
-                />
-              </div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">رقم الهاتف مع رمز الدولة</label>
+              <input
+                type="tel"
+                dir="ltr"
+                inputMode="tel"
+                autoFocus
+                value={num}
+                onChange={(e) => setNum(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") openWhatsApp(); }}
+                placeholder="+212621256548"
+                className="w-full rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-foreground text-sm tracking-wide placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:border-[#25D366]/40 transition-all"
+              />
               <p className="text-[10.5px] text-muted-foreground mt-1.5 text-right">
-                مثال: 0621256548
+                مثال: +212621256548
               </p>
             </div>
 
