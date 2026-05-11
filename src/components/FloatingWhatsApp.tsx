@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 
 const POS_KEY = "fw_pos_v1";
-const NUM_KEY = "fw_number_v1";
+const LAST_KEY = "fw_last_number_v1";
 const SIZE = 32;
 
 export default function FloatingWhatsApp() {
@@ -16,6 +16,10 @@ export default function FloatingWhatsApp() {
     return { x: 20, y: 120 };
   });
   const [expanded, setExpanded] = useState(false);
+  const [num, setNum] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(LAST_KEY) || "";
+  });
   const dragging = useRef(false);
   const moved = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
@@ -56,35 +60,23 @@ export default function FloatingWhatsApp() {
   };
 
   const openWhatsApp = () => {
-    let num = localStorage.getItem(NUM_KEY) || "";
-    if (!num) {
-      const input = window.prompt("أدخل رقم واتساب البزنس بصيغة دولية بدون + (مثال: 9647XXXXXXXXX):", "");
-      if (!input) return;
-      num = input.replace(/\D/g, "");
-      if (!num) {
-        toast.error("رقم غير صالح");
-        return;
-      }
-      localStorage.setItem(NUM_KEY, num);
+    const clean = num.replace(/\D/g, "");
+    if (!clean) {
+      toast.error("أدخل رقماً صالحاً");
+      return;
     }
-    // Android: target WhatsApp Business package directly
+    localStorage.setItem(LAST_KEY, clean);
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (isAndroid) {
-      const intent = `intent://send/?phone=${num}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
-      window.location.href = intent;
+      // Open WhatsApp Business app directly (not browser)
+      window.location.href = `intent://send/?phone=${clean}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
       setTimeout(() => {
-        // fallback if business not installed
-        window.location.href = `https://wa.me/${num}`;
-      }, 1500);
+        // fallback to regular WhatsApp app if business not installed
+        window.location.href = `intent://send/?phone=${clean}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+      }, 1200);
     } else {
-      window.open(`https://wa.me/${num}`, "_blank");
+      window.location.href = `whatsapp://send?phone=${clean}`;
     }
-    setExpanded(false);
-  };
-
-  const changeNumber = () => {
-    localStorage.removeItem(NUM_KEY);
-    toast.success("تم مسح الرقم. اضغط الزر مرة أخرى لإدخال رقم جديد.");
     setExpanded(false);
   };
 
@@ -102,18 +94,18 @@ export default function FloatingWhatsApp() {
         className="fixed z-[60] rounded-full bg-[#25D366] shadow-lg shadow-black/30 flex items-center justify-center cursor-grab active:cursor-grabbing select-none ring-2 ring-white/20"
         title="واتساب — اسحب للتحريك، اضغط للفتح، ضغطة طويلة لتغيير الرقم"
       >
-        <svg viewBox="0 0 32 32" className="h-4 w-4 text-white" fill="currentColor">
+        <svg viewBox="0 0 32 32" className="h-4 w-4 text-white pointer-events-none" fill="currentColor">
           <path d="M16 .396C7.164.396 0 7.56 0 16.396c0 2.836.744 5.612 2.156 8.052L.06 31.604l7.34-2.06a15.93 15.93 0 0 0 8.6 2.456h.004c8.836 0 16-7.164 16-16S24.836.396 16 .396zm0 29.18a13.18 13.18 0 0 1-6.72-1.836l-.48-.288-4.36 1.224 1.244-4.244-.312-.492A13.16 13.16 0 0 1 2.836 16.4C2.836 9.116 8.72 3.232 16 3.232S29.164 9.116 29.164 16.4 23.28 29.576 16 29.576zm7.232-9.864c-.396-.2-2.348-1.16-2.712-1.292-.364-.132-.628-.2-.892.2s-1.024 1.292-1.256 1.556c-.232.264-.46.296-.856.1-.396-.2-1.672-.616-3.184-1.964-1.176-1.048-1.972-2.344-2.204-2.74-.232-.396-.024-.612.176-.808.18-.18.396-.46.596-.692.2-.232.264-.396.396-.66.132-.264.064-.492-.032-.692-.1-.2-.892-2.148-1.224-2.94-.32-.764-.648-.66-.892-.672-.232-.012-.496-.012-.76-.012a1.46 1.46 0 0 0-1.06.496c-.364.396-1.388 1.356-1.388 3.304s1.42 3.832 1.62 4.096c.2.264 2.796 4.268 6.78 5.984.948.408 1.688.652 2.264.836.952.304 1.816.26 2.5.16.764-.116 2.348-.96 2.68-1.888.328-.928.328-1.724.232-1.888-.1-.164-.364-.264-.76-.464z"/>
         </svg>
       </div>
 
       {expanded && (
         <div
-          className="fixed inset-0 z-[59] bg-black/40 backdrop-blur-sm flex items-center justify-center animate-fade-in"
+          className="fixed inset-0 z-[59] bg-black/40 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4"
           onClick={() => setExpanded(false)}
         >
           <div
-            className="relative flex flex-col items-center gap-4 p-8 rounded-3xl bg-card border border-border shadow-2xl"
+            className="relative flex flex-col items-center gap-4 p-6 rounded-3xl bg-card border border-border shadow-2xl w-full max-w-xs"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -123,21 +115,29 @@ export default function FloatingWhatsApp() {
             >
               <X className="h-4 w-4" />
             </button>
+            <p className="text-sm font-semibold text-foreground mt-2">واتساب بزنس</p>
+            <input
+              type="tel"
+              dir="ltr"
+              inputMode="numeric"
+              autoFocus
+              value={num}
+              onChange={(e) => setNum(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") openWhatsApp(); }}
+              placeholder="9647XXXXXXXXX"
+              className="w-full text-center px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]/40"
+            />
             <button
               onClick={openWhatsApp}
-              className="h-28 w-28 rounded-full bg-[#25D366] hover:bg-[#1ebe57] transition-all flex items-center justify-center shadow-xl shadow-[#25D366]/40 active:scale-95"
+              className="h-24 w-24 rounded-full bg-[#25D366] hover:bg-[#1ebe57] transition-all flex items-center justify-center shadow-xl shadow-[#25D366]/40 active:scale-95"
             >
-              <svg viewBox="0 0 32 32" className="h-14 w-14 text-white" fill="currentColor">
+              <svg viewBox="0 0 32 32" className="h-12 w-12 text-white" fill="currentColor">
                 <path d="M16 .396C7.164.396 0 7.56 0 16.396c0 2.836.744 5.612 2.156 8.052L.06 31.604l7.34-2.06a15.93 15.93 0 0 0 8.6 2.456h.004c8.836 0 16-7.164 16-16S24.836.396 16 .396zm0 29.18a13.18 13.18 0 0 1-6.72-1.836l-.48-.288-4.36 1.224 1.244-4.244-.312-.492A13.16 13.16 0 0 1 2.836 16.4C2.836 9.116 8.72 3.232 16 3.232S29.164 9.116 29.164 16.4 23.28 29.576 16 29.576zm7.232-9.864c-.396-.2-2.348-1.16-2.712-1.292-.364-.132-.628-.2-.892.2s-1.024 1.292-1.256 1.556c-.232.264-.46.296-.856.1-.396-.2-1.672-.616-3.184-1.964-1.176-1.048-1.972-2.344-2.204-2.74-.232-.396-.024-.612.176-.808.18-.18.396-.46.596-.692.2-.232.264-.396.396-.66.132-.264.064-.492-.032-.692-.1-.2-.892-2.148-1.224-2.94-.32-.764-.648-.66-.892-.672-.232-.012-.496-.012-.76-.012a1.46 1.46 0 0 0-1.06.496c-.364.396-1.388 1.356-1.388 3.304s1.42 3.832 1.62 4.096c.2.264 2.796 4.268 6.78 5.984.948.408 1.688.652 2.264.836.952.304 1.816.26 2.5.16.764-.116 2.348-.96 2.68-1.888.328-.928.328-1.724.232-1.888-.1-.164-.364-.264-.76-.464z"/>
               </svg>
             </button>
-            <p className="text-sm font-medium text-foreground">فتح واتساب بزنس</p>
-            <button
-              onClick={changeNumber}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              تغيير الرقم
-            </button>
+            <p className="text-[11px] text-muted-foreground text-center">
+              صيغة دولية بدون + (مثال: 9647XXXXXXXXX)
+            </p>
           </div>
         </div>
       )}
