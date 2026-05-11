@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Papa from "papaparse";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2 } from "lucide-react";
+import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,11 @@ export default function CapcutAccounts() {
   const [perEmailPasswordOpen, setPerEmailPasswordOpen] = useState(false);
   const [perEmailPassword, setPerEmailPassword] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
+
+  // G2G CSV import
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importRows, setImportRows] = useState<{ email: string; password: string; selected: boolean }[]>([]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["account_categories"],
@@ -203,6 +209,69 @@ export default function CapcutAccounts() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkInsertMutation = useMutation({
+    mutationFn: async (rows: { email: string; password: string }[]) => {
+      const categoryId = !activeTab || activeTab === UNCAT ? null : activeTab;
+      const payload = rows.map(r => ({
+        username: r.email.trim(),
+        password_or_code: r.password,
+        plan_type: "Pro",
+        status: "متاح",
+        user_id: user!.id,
+        category_id: categoryId,
+      }));
+      const { error } = await supabase.from("capcut_accounts").insert(payload);
+      if (error) throw error;
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
+      setImportDialogOpen(false);
+      setImportRows([]);
+      toast.success(`تم إضافة ${count} حساب`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/;
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!activeTab) { toast.error("يرجى اختيار تصنيف أولاً"); return; }
+    Papa.parse<string[]>(file, {
+      skipEmptyLines: true,
+      complete: (res) => {
+        const data = res.data as string[][];
+        if (!data.length) { toast.error("الملف فارغ"); return; }
+        // Detect header row & column indices
+        let emailIdx = 1, pwdIdx = 3, startRow = 0;
+        const header = data[0].map(c => (c || "").toLowerCase());
+        const eIdx = header.findIndex(c => c.includes("email") || c.includes("user id"));
+        const pIdx = header.findIndex(c => c.includes("password"));
+        if (eIdx !== -1 && pIdx !== -1) { emailIdx = eIdx; pwdIdx = pIdx; startRow = 1; }
+        const seen = new Set<string>();
+        const rows: { email: string; password: string; selected: boolean }[] = [];
+        for (let i = startRow; i < data.length; i++) {
+          const row = data[i];
+          if (!row) continue;
+          const rawEmail = (row[emailIdx] || "").replace(/^['"\s]+|['"\s]+$/g, "");
+          const password = (row[pwdIdx] || "").trim();
+          const m = rawEmail.match(EMAIL_RE);
+          const email = m ? m[0] : rawEmail;
+          if (!email || !password) continue;
+          if (seen.has(email.toLowerCase())) continue;
+          seen.add(email.toLowerCase());
+          rows.push({ email, password, selected: true });
+        }
+        if (!rows.length) { toast.error("لم يتم العثور على حسابات صالحة"); return; }
+        setImportRows(rows);
+        setImportDialogOpen(true);
+      },
+      error: () => toast.error("فشل قراءة الملف"),
+    });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("capcut_accounts").delete().in("id", ids);
@@ -325,6 +394,14 @@ export default function CapcutAccounts() {
 
         {/* Quick Settings Row */}
         <div className="flex flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto">
+          <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!activeTab}
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[10px] sm:text-xs font-medium hover:bg-primary/20 transition-all whitespace-nowrap shrink-0 disabled:opacity-50"
+          >
+            <Upload className="h-3 w-3" /> رفع G2G
+          </button>
           <button
             onClick={() => setSamePassword(!samePassword)}
             className={cn(
@@ -713,6 +790,60 @@ export default function CapcutAccounts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* G2G Import Preview */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-2xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-4 w-4 text-primary" /> معاينة الاستيراد ({importRows.filter(r => r.selected).length}/{importRows.length})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">سيتم الإضافة إلى: <strong className="text-foreground">{categories.find(c => c.id === activeTab)?.name || "بدون تصنيف"}</strong></span>
+              <button
+                onClick={() => setImportRows(rows => rows.map(r => ({ ...r, selected: !rows.every(x => x.selected) })))}
+                className="text-primary hover:underline"
+              >
+                {importRows.every(r => r.selected) ? "إلغاء تحديد الكل" : "تحديد الكل"}
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto border border-border/50 rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead className="text-right text-xs">الإيميل</TableHead>
+                    <TableHead className="text-right text-xs">كلمة السر</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importRows.map((r, i) => (
+                    <TableRow key={i} className={cn(!r.selected && "opacity-40")}>
+                      <TableCell>
+                        <Checkbox checked={r.selected} onCheckedChange={() => setImportRows(rows => rows.map((x, j) => j === i ? { ...x, selected: !x.selected } : x))} />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{r.email}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{r.password}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={() => setImportDialogOpen(false)}>إلغاء</Button>
+              <Button
+                size="sm"
+                onClick={() => bulkInsertMutation.mutate(importRows.filter(r => r.selected))}
+                disabled={bulkInsertMutation.isPending || !importRows.some(r => r.selected)}
+              >
+                <Save className="h-3.5 w-3.5 ml-1" /> حفظ {importRows.filter(r => r.selected).length} حساب
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
