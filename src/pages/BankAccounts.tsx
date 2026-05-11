@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Copy, Pencil, Save, X, Trash2, Landmark, GripVertical, Move, Wallet, Bitcoin } from "lucide-react";
 import { toast } from "sonner";
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -115,7 +115,10 @@ export default function BankAccounts() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
 
   const displayAccounts = (() => {
     if (!orderedIds) return accounts as BankAccount[];
@@ -318,7 +321,7 @@ function SortableAccountCard({
       <Card className={`border-border/50 hover:border-border transition-colors ${reorderMode ? "ring-2 ring-primary/30" : ""}`}>
         <CardContent className="pt-4">
           {reorderMode ? (
-            <div className="flex items-center gap-3 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+            <div className="flex items-center gap-3 cursor-grab active:cursor-grabbing touch-none select-none" {...attributes} {...listeners}>
               <GripVertical className="h-5 w-5 text-muted-foreground shrink-0" />
               <div className="whitespace-pre-line text-sm leading-relaxed bg-muted/30 rounded-lg p-3 font-mono flex-1">
                 {formatFull(account)}

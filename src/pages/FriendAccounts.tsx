@@ -224,7 +224,7 @@ export default function FriendAccounts() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive opacity-100 md:opacity-0 md:group-hover:opacity-100 transition"
                     onClick={() => setDeleteId(a.id)}
                   >
                     <Trash2 className="h-3 w-3" />
