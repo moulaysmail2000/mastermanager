@@ -646,6 +646,7 @@ export default function Dashboard() {
         </Card>
         </div>
       </Reveal>
+      <FloatingWhatsApp />
     </div>
   );
 }
