@@ -321,7 +321,7 @@ function SortableAccountCard({
       <Card className={`border-border/50 hover:border-border transition-colors ${reorderMode ? "ring-2 ring-primary/30" : ""}`}>
         <CardContent className="pt-4">
           {reorderMode ? (
-            <div className="flex items-center gap-3 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+            <div className="flex items-center gap-3 cursor-grab active:cursor-grabbing touch-none select-none" {...attributes} {...listeners}>
               <GripVertical className="h-5 w-5 text-muted-foreground shrink-0" />
               <div className="whitespace-pre-line text-sm leading-relaxed bg-muted/30 rounded-lg p-3 font-mono flex-1">
                 {formatFull(account)}
