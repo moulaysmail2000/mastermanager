@@ -30,6 +30,38 @@ const STATUS_CONFIG = {
 
 type StatusKey = keyof typeof STATUS_CONFIG;
 
+function openWhatsAppDirect(raw: string) {
+  let full = (raw || "").replace(/\D/g, "");
+  if (!full) return;
+  // Moroccan local number starting with 0 → +212
+  if (full.startsWith("0")) full = "212" + full.slice(1);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    window.location.href = `intent://send/?phone=${full}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
+    setTimeout(() => {
+      window.location.href = `intent://send/?phone=${full}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+    }, 1200);
+  } else {
+    window.location.href = `whatsapp://send?phone=${full}`;
+  }
+}
+
+function WhatsAppBtn({ phone }: { phone: string }) {
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className="h-6 w-6 text-[#25D366] hover:text-[#1ebe57] hover:bg-[#25D366]/10"
+      onClick={() => openWhatsAppDirect(phone)}
+      title="فتح في واتساب"
+    >
+      <svg viewBox="0 0 32 32" className="h-3.5 w-3.5" fill="currentColor">
+        <path d="M16 .396C7.164.396 0 7.56 0 16.396c0 2.836.744 5.612 2.156 8.052L.06 31.604l7.34-2.06a15.93 15.93 0 0 0 8.6 2.456h.004c8.836 0 16-7.164 16-16S24.836.396 16 .396zm7.232 19.316c-.396-.2-2.348-1.16-2.712-1.292-.364-.132-.628-.2-.892.2s-1.024 1.292-1.256 1.556c-.232.264-.46.296-.856.1-.396-.2-1.672-.616-3.184-1.964-1.176-1.048-1.972-2.344-2.204-2.74-.232-.396-.024-.612.176-.808.18-.18.396-.46.596-.692.2-.232.264-.396.396-.66.132-.264.064-.492-.032-.692-.1-.2-.892-2.148-1.224-2.94-.32-.764-.648-.66-.892-.672-.232-.012-.496-.012-.76-.012a1.46 1.46 0 0 0-1.06.496c-.364.396-1.388 1.356-1.388 3.304s1.42 3.832 1.62 4.096c.2.264 2.796 4.268 6.78 5.984.948.408 1.688.652 2.264.836.952.304 1.816.26 2.5.16.764-.116 2.348-.96 2.68-1.888.328-.928.328-1.724.232-1.888-.1-.164-.364-.264-.76-.464z"/>
+      </svg>
+    </Button>
+  );
+}
+
 function getExpiryColor(expiryDate: string) {
   const days = differenceInDays(new Date(expiryDate), new Date());
   if (days < 0) return { label: "منتهي", dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" };
@@ -303,6 +335,7 @@ export default function UnpaidNumbers() {
                         <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
                           <Copy className="h-3 w-3" />
                         </Button>
+                        <WhatsAppBtn phone={n.phone_number} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
@@ -449,6 +482,7 @@ export default function UnpaidNumbers() {
                           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(item.phone_number)}>
                             <Copy className="h-3 w-3" />
                           </Button>
+                          <WhatsAppBtn phone={item.phone_number} />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
