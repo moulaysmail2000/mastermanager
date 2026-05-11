@@ -398,7 +398,7 @@ export default function CapcutAccounts() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={!activeTab}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[10px] sm:text-xs font-medium hover:bg-primary/20 transition-all whitespace-nowrap shrink-0 disabled:opacity-50"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-border text-[10px] sm:text-xs font-medium text-muted-foreground hover:text-foreground hover:border-border/80 transition-all whitespace-nowrap shrink-0 disabled:opacity-50"
           >
             <Upload className="h-3 w-3" /> رفع G2G
           </button>
