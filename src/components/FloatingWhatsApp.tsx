@@ -86,10 +86,7 @@ export default function FloatingWhatsApp() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          changeNumber();
-        }}
+        onContextMenu={(e) => e.preventDefault()}
         style={{ left: pos.x, top: pos.y, width: SIZE, height: SIZE, touchAction: "none" }}
         className="fixed z-[60] rounded-full bg-[#25D366] shadow-lg shadow-black/30 flex items-center justify-center cursor-grab active:cursor-grabbing select-none ring-2 ring-white/20"
         title="واتساب — اسحب للتحريك، اضغط للفتح، ضغطة طويلة لتغيير الرقم"
