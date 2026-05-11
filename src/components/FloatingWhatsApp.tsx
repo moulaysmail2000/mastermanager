@@ -49,15 +49,7 @@ export default function FloatingWhatsApp() {
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     localStorage.setItem(POS_KEY, JSON.stringify(pos));
     if (!moved.current) {
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      if (isAndroid) {
-        window.location.href = `intent://#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
-        setTimeout(() => {
-          window.location.href = `intent://#Intent;scheme=whatsapp;package=com.whatsapp;end`;
-        }, 1200);
-      } else {
-        window.location.href = `whatsapp://`;
-      }
+      window.location.href = `whatsapp://send`;
     }
   };
 
