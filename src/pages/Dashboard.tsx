@@ -26,6 +26,7 @@ import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ConsultDialog } from "@/components/ConsultDialog";
 import DailyStatsBar from "@/components/DailyStatsBar";
 import LiveClock from "@/components/LiveClock";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import {
   AreaChart,
   Area,
@@ -645,6 +646,7 @@ export default function Dashboard() {
         </Card>
         </div>
       </Reveal>
+      <FloatingWhatsApp />
     </div>
   );
 }
