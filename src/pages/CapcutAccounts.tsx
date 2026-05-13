@@ -239,6 +239,32 @@ export default function CapcutAccounts() {
     e.target.value = "";
     if (!file) return;
     if (!activeTab) { toast.error("يرجى اختيار تصنيف أولاً"); return; }
+    const isTxt = /\.txt$/i.test(file.name) || file.type === "text/plain";
+    if (isTxt) {
+      file.text().then((text) => {
+        const seen = new Set<string>();
+        const rows: { email: string; password: string; selected: boolean }[] = [];
+        const blocks = text.split(/\n\s*-{3,}\s*\n|\r?\n\r?\n/);
+        const parseBlock = (block: string) => {
+          const emailMatch = block.match(/Account\s*[:：]\s*([^\s\r\n]+)/i) || block.match(EMAIL_RE);
+          const pwdMatch = block.match(/Password\s*[:：]\s*([^\s\r\n]+)/i);
+          if (!emailMatch || !pwdMatch) return;
+          const rawEmail = emailMatch[1] || emailMatch[0];
+          const m = rawEmail.match(EMAIL_RE);
+          const email = m ? m[0] : rawEmail.trim();
+          const password = pwdMatch[1].trim();
+          if (!email || !password) return;
+          if (seen.has(email.toLowerCase())) return;
+          seen.add(email.toLowerCase());
+          rows.push({ email, password, selected: true });
+        };
+        blocks.forEach(parseBlock);
+        if (!rows.length) { toast.error("لم يتم العثور على حسابات صالحة"); return; }
+        setImportRows(rows);
+        setImportDialogOpen(true);
+      }).catch(() => toast.error("فشل قراءة الملف"));
+      return;
+    }
     Papa.parse<string[]>(file, {
       skipEmptyLines: true,
       complete: (res) => {
@@ -386,7 +412,7 @@ export default function CapcutAccounts() {
             <Button onClick={handlePaste} size="sm" disabled={insertMutation.isPending || !activeTab} className="gap-1.5">
               <ClipboardPaste className="h-3.5 w-3.5" /> لصق
             </Button>
-            <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" accept=".csv,.txt,text/csv,text/plain" className="hidden" onChange={handleFileUpload} />
             <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="outline" disabled={!activeTab} className="gap-1.5">
               <Upload className="h-3.5 w-3.5" /> رفع G2G
             </Button>
