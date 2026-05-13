@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2 } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -329,14 +329,55 @@ export default function UnpaidNumbers() {
               <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب التبويبات"}
             </Button>
             {activeTab === "classification" && !adding && !reorderMode && (
-              <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> إضافة رقم
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  title="إضافة من الحافظة"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      const digits = (text || "").replace(/\D/g, "");
+                      if (!digits || digits.length < 6) { toast.error("لا يوجد رقم في الحافظة"); return; }
+                      addMutation.mutate({ phone: digits, status: "waiting_account" });
+                    } catch {
+                      toast.error("تعذر قراءة الحافظة");
+                    }
+                  }}
+                >
+                  <ClipboardPaste className="h-3.5 w-3.5" /> لصق
+                </Button>
+                <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> إضافة رقم
+                </Button>
+              </>
             )}
             {activeTab === "expiry" && !addingExpiry && !reorderMode && (
-              <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> إضافة رقم
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  title="لصق رقم من الحافظة"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      const digits = (text || "").replace(/\D/g, "");
+                      if (!digits || digits.length < 6) { toast.error("لا يوجد رقم في الحافظة"); return; }
+                      setNewExpiryNumber(digits);
+                      setAddingExpiry(true);
+                    } catch {
+                      toast.error("تعذر قراءة الحافظة");
+                    }
+                  }}
+                >
+                  <ClipboardPaste className="h-3.5 w-3.5" /> لصق
+                </Button>
+                <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> إضافة رقم
+                </Button>
+              </>
             )}
           </div>
         </div>
