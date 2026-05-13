@@ -412,7 +412,7 @@ export default function CapcutAccounts() {
             <Button onClick={handlePaste} size="sm" disabled={insertMutation.isPending || !activeTab} className="gap-1.5">
               <ClipboardPaste className="h-3.5 w-3.5" /> لصق
             </Button>
-            <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" accept=".csv,.txt,text/csv,text/plain" className="hidden" onChange={handleFileUpload} />
             <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="outline" disabled={!activeTab} className="gap-1.5">
               <Upload className="h-3.5 w-3.5" /> رفع G2G
             </Button>
