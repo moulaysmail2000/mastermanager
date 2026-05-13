@@ -20,6 +20,10 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Plus as PlusIcon, Move, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const STATUS_CONFIG = {
   not_paid: { label: "لم يدفع", dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" },
@@ -86,6 +90,9 @@ export default function UnpaidNumbers() {
   const [manualEndDate, setManualEndDate] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<StatusKey | "all">("all");
   const [activeTab, setActiveTab] = useState("expiry");
+  const [reorderMode, setReorderMode] = useState(false);
+  const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
+  const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -98,7 +105,7 @@ export default function UnpaidNumbers() {
   const { data: numbers = [], isLoading } = useQuery({
     queryKey: ["unpaid_numbers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("unpaid_numbers").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("unpaid_numbers").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -108,7 +115,7 @@ export default function UnpaidNumbers() {
   const { data: expiryDates = [], isLoading: isLoadingExpiry } = useQuery({
     queryKey: ["expiry_dates"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("expiry_dates").select("*").order("expiry_date", { ascending: true });
+      const { data, error } = await supabase.from("expiry_dates").select("*").order("sort_order", { ascending: true }).order("expiry_date", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
@@ -218,6 +225,58 @@ export default function UnpaidNumbers() {
     onError: () => toast.error("فشل الحذف"),
   });
 
+  const reorderUnpaidMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id, idx) => supabase.from("unpaid_numbers").update({ sort_order: idx }).eq("id", id)));
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم حفظ الترتيب"); },
+    onError: () => toast.error("فشل الترتيب"),
+  });
+
+  const reorderExpiryMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id, idx) => supabase.from("expiry_dates").update({ sort_order: idx }).eq("id", id)));
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["expiry_dates"] }); toast.success("تم حفظ الترتيب"); },
+    onError: () => toast.error("فشل الترتيب"),
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const displayUnpaid = (() => {
+    const filtered = (numbers as any[]).filter(n => filterStatus === "all" || n.status === filterStatus);
+    if (!orderedUnpaidIds) return filtered;
+    const map = new Map(filtered.map((a) => [a.id, a]));
+    return orderedUnpaidIds.map((id) => map.get(id)).filter(Boolean);
+  })();
+
+  const displayExpiry = (() => {
+    if (!orderedExpiryIds) return expiryDates as any[];
+    const map = new Map((expiryDates as any[]).map((a) => [a.id, a]));
+    return orderedExpiryIds.map((id) => map.get(id)).filter(Boolean);
+  })();
+
+  const handleUnpaidDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = displayUnpaid.map((a: any) => a.id);
+    const next = arrayMove(ids, ids.indexOf(active.id as string), ids.indexOf(over.id as string));
+    setOrderedUnpaidIds(next);
+    reorderUnpaidMutation.mutate(next);
+  };
+
+  const handleExpiryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = displayExpiry.map((a: any) => a.id);
+    const next = arrayMove(ids, ids.indexOf(active.id as string), ids.indexOf(over.id as string));
+    setOrderedExpiryIds(next);
+    reorderExpiryMutation.mutate(next);
+  };
+
   return (
     <div className="space-y-3">
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
@@ -233,14 +292,24 @@ export default function UnpaidNumbers() {
             </TabsTrigger>
           </TabsList>
           {activeTab === "classification" && !adding && (
-            <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> إضافة رقم
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(numbers as any[]).length < 2} className="gap-1.5">
+                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
+              </Button>
+              <Button size="sm" onClick={() => setAdding(true)} disabled={reorderMode} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> إضافة رقم
+              </Button>
+            </div>
           )}
           {activeTab === "expiry" && !addingExpiry && (
-            <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> إضافة رقم
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(expiryDates as any[]).length < 2} className="gap-1.5">
+                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
+              </Button>
+              <Button size="sm" onClick={() => setAddingExpiry(true)} disabled={reorderMode} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> إضافة رقم
+              </Button>
+            </div>
           )}
         </div>
 
