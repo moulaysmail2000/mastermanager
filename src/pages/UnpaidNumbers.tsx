@@ -89,7 +89,17 @@ export default function UnpaidNumbers() {
   const [manualDateMode, setManualDateMode] = useState(false);
   const [manualEndDate, setManualEndDate] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<StatusKey | "all">("all");
-  const [activeTab, setActiveTab] = useState("expiry");
+  const [tabsOrder, setTabsOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("unpaid_tabs_order");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 2) return parsed;
+      }
+    } catch {}
+    return ["expiry", "classification"];
+  });
+  const [activeTab, setActiveTab] = useState(tabsOrder[0]);
   const [reorderMode, setReorderMode] = useState(false);
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
@@ -246,6 +256,20 @@ export default function UnpaidNumbers() {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
   );
 
+  const handleTabsDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const next = arrayMove(tabsOrder, tabsOrder.indexOf(active.id as string), tabsOrder.indexOf(over.id as string));
+    setTabsOrder(next);
+    try { localStorage.setItem("unpaid_tabs_order", JSON.stringify(next)); } catch {}
+    toast.success("تم حفظ ترتيب التبويبات");
+  };
+
+  const TAB_META: Record<string, { label: string; icon: typeof CalendarClock }> = {
+    expiry: { label: "تواريخ الانتهاء", icon: CalendarClock },
+    classification: { label: "تصنيف الأرقام", icon: Tags },
+  };
+
   const displayUnpaid = (() => {
     const filtered = (numbers as any[]).filter(n => filterStatus === "all" || n.status === filterStatus);
     if (!orderedUnpaidIds) return filtered;
@@ -281,36 +305,40 @@ export default function UnpaidNumbers() {
     <div className="space-y-3">
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <div className="flex items-center justify-between">
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="expiry" className="gap-1.5 text-xs">
-              <CalendarClock className="h-3.5 w-3.5" />
-              تواريخ الانتهاء
-            </TabsTrigger>
-            <TabsTrigger value="classification" className="gap-1.5 text-xs">
-              <Tags className="h-3.5 w-3.5" />
-              تصنيف الأرقام
-            </TabsTrigger>
-          </TabsList>
-          {activeTab === "classification" && !adding && (
-            <div className="flex gap-2">
-              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(numbers as any[]).length < 2} className="gap-1.5">
-                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
-              </Button>
-              <Button size="sm" onClick={() => setAdding(true)} disabled={reorderMode} className="gap-1.5">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTabsDragEnd}>
+            <SortableContext items={tabsOrder} strategy={verticalListSortingStrategy}>
+              <TabsList className="bg-muted/50">
+                {tabsOrder.map((tabKey) => {
+                  const meta = TAB_META[tabKey];
+                  const Icon = meta.icon;
+                  return (
+                    <SortableRow key={tabKey} id={tabKey} reorderMode={reorderMode}>
+                      <TabsTrigger value={tabKey} className="gap-1.5 text-xs" disabled={reorderMode}>
+                        {reorderMode && <GripVertical className="h-3 w-3 text-muted-foreground" />}
+                        <Icon className="h-3.5 w-3.5" />
+                        {meta.label}
+                      </TabsTrigger>
+                    </SortableRow>
+                  );
+                })}
+              </TabsList>
+            </SortableContext>
+          </DndContext>
+          <div className="flex gap-2">
+            <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => setReorderMode(v => !v)} className="gap-1.5">
+              <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب التبويبات"}
+            </Button>
+            {activeTab === "classification" && !adding && !reorderMode && (
+              <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> إضافة رقم
               </Button>
-            </div>
-          )}
-          {activeTab === "expiry" && !addingExpiry && (
-            <div className="flex gap-2">
-              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(expiryDates as any[]).length < 2} className="gap-1.5">
-                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
-              </Button>
-              <Button size="sm" onClick={() => setAddingExpiry(true)} disabled={reorderMode} className="gap-1.5">
+            )}
+            {activeTab === "expiry" && !addingExpiry && !reorderMode && (
+              <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> إضافة رقم
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ===== Classification Tab ===== */}
@@ -381,15 +409,13 @@ export default function UnpaidNumbers() {
                     const status = n.status as StatusKey;
                     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
                     return (
-                      <SortableRow key={n.id} id={n.id} reorderMode={reorderMode}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border, reorderMode && "ring-2 ring-primary/30")}>
+                      <SortableRow key={n.id} id={n.id} reorderMode={false}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
                           <CardContent className="p-2 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                               <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
                               <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
                             </div>
-                            {!reorderMode && (
                               <div className="flex items-center gap-1">
                                 <div className="flex gap-0.5 mr-2">
                                   {Object.entries(STATUS_CONFIG).map(([key, c]) => (
@@ -428,7 +454,6 @@ export default function UnpaidNumbers() {
                                   </AlertDialogContent>
                                 </AlertDialog>
                               </div>
-                            )}
                           </CardContent>
                         </Card>
                       </SortableRow>
@@ -546,18 +571,17 @@ export default function UnpaidNumbers() {
                   {displayExpiry.map((item: any) => {
                     const color = getExpiryColor(item.expiry_date);
                     return (
-                      <SortableRow key={item.id} id={item.id} reorderMode={reorderMode}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border, reorderMode && "ring-2 ring-primary/30")}>
+                      <SortableRow key={item.id} id={item.id} reorderMode={false}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border)}>
                           <CardContent className="p-2 space-y-1">
                       {/* Row 1: Number + actions */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color.dot)} />
                           <span className="font-medium text-xs text-foreground truncate" dir="ltr">{item.phone_number}</span>
                           {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
                         </div>
-                        {!reorderMode && <div className="flex items-center gap-0.5 shrink-0">
+                        <div className="flex items-center gap-0.5 shrink-0">
                           <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md", color.bg, color.text)}>
                             {color.label}
                           </span>
@@ -582,7 +606,7 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>}
+                        </div>
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground pr-3">
