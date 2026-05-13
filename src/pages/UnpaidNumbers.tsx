@@ -20,6 +20,10 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Move, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const STATUS_CONFIG = {
   not_paid: { label: "لم يدفع", dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" },
@@ -86,6 +90,9 @@ export default function UnpaidNumbers() {
   const [manualEndDate, setManualEndDate] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<StatusKey | "all">("all");
   const [activeTab, setActiveTab] = useState("expiry");
+  const [reorderMode, setReorderMode] = useState(false);
+  const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
+  const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -98,7 +105,7 @@ export default function UnpaidNumbers() {
   const { data: numbers = [], isLoading } = useQuery({
     queryKey: ["unpaid_numbers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("unpaid_numbers").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("unpaid_numbers").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -108,7 +115,7 @@ export default function UnpaidNumbers() {
   const { data: expiryDates = [], isLoading: isLoadingExpiry } = useQuery({
     queryKey: ["expiry_dates"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("expiry_dates").select("*").order("expiry_date", { ascending: true });
+      const { data, error } = await supabase.from("expiry_dates").select("*").order("sort_order", { ascending: true }).order("expiry_date", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
@@ -218,6 +225,58 @@ export default function UnpaidNumbers() {
     onError: () => toast.error("فشل الحذف"),
   });
 
+  const reorderUnpaidMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id, idx) => supabase.from("unpaid_numbers").update({ sort_order: idx }).eq("id", id)));
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم حفظ الترتيب"); },
+    onError: () => toast.error("فشل الترتيب"),
+  });
+
+  const reorderExpiryMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id, idx) => supabase.from("expiry_dates").update({ sort_order: idx }).eq("id", id)));
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["expiry_dates"] }); toast.success("تم حفظ الترتيب"); },
+    onError: () => toast.error("فشل الترتيب"),
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const displayUnpaid = (() => {
+    const filtered = (numbers as any[]).filter(n => filterStatus === "all" || n.status === filterStatus);
+    if (!orderedUnpaidIds) return filtered;
+    const map = new Map(filtered.map((a) => [a.id, a]));
+    return orderedUnpaidIds.map((id) => map.get(id)).filter(Boolean);
+  })();
+
+  const displayExpiry = (() => {
+    if (!orderedExpiryIds) return expiryDates as any[];
+    const map = new Map((expiryDates as any[]).map((a) => [a.id, a]));
+    return orderedExpiryIds.map((id) => map.get(id)).filter(Boolean);
+  })();
+
+  const handleUnpaidDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = displayUnpaid.map((a: any) => a.id);
+    const next = arrayMove(ids, ids.indexOf(active.id as string), ids.indexOf(over.id as string));
+    setOrderedUnpaidIds(next);
+    reorderUnpaidMutation.mutate(next);
+  };
+
+  const handleExpiryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = displayExpiry.map((a: any) => a.id);
+    const next = arrayMove(ids, ids.indexOf(active.id as string), ids.indexOf(over.id as string));
+    setOrderedExpiryIds(next);
+    reorderExpiryMutation.mutate(next);
+  };
+
   return (
     <div className="space-y-3">
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
@@ -233,14 +292,24 @@ export default function UnpaidNumbers() {
             </TabsTrigger>
           </TabsList>
           {activeTab === "classification" && !adding && (
-            <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> إضافة رقم
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(numbers as any[]).length < 2} className="gap-1.5">
+                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
+              </Button>
+              <Button size="sm" onClick={() => setAdding(true)} disabled={reorderMode} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> إضافة رقم
+              </Button>
+            </div>
           )}
           {activeTab === "expiry" && !addingExpiry && (
-            <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> إضافة رقم
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => { setReorderMode(v => !v); setOrderedUnpaidIds(null); setOrderedExpiryIds(null); }} disabled={(expiryDates as any[]).length < 2} className="gap-1.5">
+                <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب"}
+              </Button>
+              <Button size="sm" onClick={() => setAddingExpiry(true)} disabled={reorderMode} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> إضافة رقم
+              </Button>
+            </div>
           )}
         </div>
 
@@ -305,60 +374,69 @@ export default function UnpaidNumbers() {
               <p className="text-muted-foreground text-sm">لا توجد أرقام</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {numbers.filter(n => filterStatus === "all" || (n as any).status === filterStatus).map((n) => {
-                const status = (n as any).status as StatusKey;
-                const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
-                return (
-                  <Card key={n.id} className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
-                    <CardContent className="p-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
-                        <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex gap-0.5 mr-2">
-                          {Object.entries(STATUS_CONFIG).map(([key, c]) => (
-                            <button
-                              key={key}
-                              title={c.label}
-                              onClick={() => key !== status && updateStatusMutation.mutate({ id: n.id, status: key })}
-                              className={cn(
-                                "h-3 w-3 rounded-full border-2 transition-all hover:scale-125",
-                                key === status ? cn(c.dot, "border-foreground/20") : "border-border/40 opacity-30 hover:opacity-100"
-                              )}
-                            >
-                              <span className={cn("block h-full w-full rounded-full", key !== status ? c.dot : "")} />
-                            </button>
-                          ))}
-                        </div>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        <WhatsAppBtn phone={n.phone_number} />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent dir="rtl">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                              <AlertDialogDescription>هل أنت متأكد من حذف الرقم {n.phone_number}؟</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-row-reverse gap-2">
-                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(n.id)}>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleUnpaidDragEnd}>
+              <SortableContext items={displayUnpaid.map((a: any) => a.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {displayUnpaid.map((n: any) => {
+                    const status = n.status as StatusKey;
+                    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
+                    return (
+                      <SortableRow key={n.id} id={n.id} reorderMode={reorderMode}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border, reorderMode && "ring-2 ring-primary/30")}>
+                          <CardContent className="p-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
+                              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
+                              <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
+                            </div>
+                            {!reorderMode && (
+                              <div className="flex items-center gap-1">
+                                <div className="flex gap-0.5 mr-2">
+                                  {Object.entries(STATUS_CONFIG).map(([key, c]) => (
+                                    <button
+                                      key={key}
+                                      title={c.label}
+                                      onClick={() => key !== status && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      className={cn(
+                                        "h-3 w-3 rounded-full border-2 transition-all hover:scale-125",
+                                        key === status ? cn(c.dot, "border-foreground/20") : "border-border/40 opacity-30 hover:opacity-100"
+                                      )}
+                                    >
+                                      <span className={cn("block h-full w-full rounded-full", key !== status ? c.dot : "")} />
+                                    </button>
+                                  ))}
+                                </div>
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <WhatsAppBtn phone={n.phone_number} />
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent dir="rtl">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                                      <AlertDialogDescription>هل أنت متأكد من حذف الرقم {n.phone_number}؟</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="flex-row-reverse gap-2">
+                                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(n.id)}>حذف</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </SortableRow>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </TabsContent>
 
@@ -462,20 +540,24 @@ export default function UnpaidNumbers() {
               <p className="text-muted-foreground text-sm">لا توجد تواريخ انتهاء</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {expiryDates.map((item) => {
-                const color = getExpiryColor(item.expiry_date);
-                return (
-                  <Card key={item.id} className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border)}>
-                    <CardContent className="p-2 space-y-1">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExpiryDragEnd}>
+              <SortableContext items={displayExpiry.map((a: any) => a.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {displayExpiry.map((item: any) => {
+                    const color = getExpiryColor(item.expiry_date);
+                    return (
+                      <SortableRow key={item.id} id={item.id} reorderMode={reorderMode}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border, reorderMode && "ring-2 ring-primary/30")}>
+                          <CardContent className="p-2 space-y-1">
                       {/* Row 1: Number + actions */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
+                          {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color.dot)} />
                           <span className="font-medium text-xs text-foreground truncate" dir="ltr">{item.phone_number}</span>
                           {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
                         </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
+                        {!reorderMode && <div className="flex items-center gap-0.5 shrink-0">
                           <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md", color.bg, color.text)}>
                             {color.label}
                           </span>
@@ -500,7 +582,7 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>
+                        </div>}
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground pr-3">
@@ -509,11 +591,14 @@ export default function UnpaidNumbers() {
                         </span>
                         {item.notes && <span className="sm:hidden truncate max-w-[100px]">{item.notes}</span>}
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                          </CardContent>
+                        </Card>
+                      </SortableRow>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </TabsContent>
       </Tabs>
@@ -589,6 +674,20 @@ export default function UnpaidNumbers() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function SortableRow({ id, reorderMode, children }: { id: string; reorderMode: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !reorderMode });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...(reorderMode ? { ...attributes, ...listeners } : {})} className={reorderMode ? "cursor-grab active:cursor-grabbing touch-none select-none" : undefined}>
+      {children}
     </div>
   );
 }
