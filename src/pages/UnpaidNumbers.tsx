@@ -409,15 +409,13 @@ export default function UnpaidNumbers() {
                     const status = n.status as StatusKey;
                     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
                     return (
-                      <SortableRow key={n.id} id={n.id} reorderMode={reorderMode}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border, reorderMode && "ring-2 ring-primary/30")}>
+                      <SortableRow key={n.id} id={n.id} reorderMode={false}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
                           <CardContent className="p-2 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                               <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
                               <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
                             </div>
-                            {!reorderMode && (
                               <div className="flex items-center gap-1">
                                 <div className="flex gap-0.5 mr-2">
                                   {Object.entries(STATUS_CONFIG).map(([key, c]) => (
@@ -456,7 +454,6 @@ export default function UnpaidNumbers() {
                                   </AlertDialogContent>
                                 </AlertDialog>
                               </div>
-                            )}
                           </CardContent>
                         </Card>
                       </SortableRow>
@@ -574,18 +571,17 @@ export default function UnpaidNumbers() {
                   {displayExpiry.map((item: any) => {
                     const color = getExpiryColor(item.expiry_date);
                     return (
-                      <SortableRow key={item.id} id={item.id} reorderMode={reorderMode}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border, reorderMode && "ring-2 ring-primary/30")}>
+                      <SortableRow key={item.id} id={item.id} reorderMode={false}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border)}>
                           <CardContent className="p-2 space-y-1">
                       {/* Row 1: Number + actions */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color.dot)} />
                           <span className="font-medium text-xs text-foreground truncate" dir="ltr">{item.phone_number}</span>
                           {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
                         </div>
-                        {!reorderMode && <div className="flex items-center gap-0.5 shrink-0">
+                        <div className="flex items-center gap-0.5 shrink-0">
                           <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md", color.bg, color.text)}>
                             {color.label}
                           </span>
@@ -610,7 +606,7 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>}
+                        </div>
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground pr-3">
