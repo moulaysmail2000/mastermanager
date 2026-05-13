@@ -540,20 +540,24 @@ export default function UnpaidNumbers() {
               <p className="text-muted-foreground text-sm">لا توجد تواريخ انتهاء</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {expiryDates.map((item) => {
-                const color = getExpiryColor(item.expiry_date);
-                return (
-                  <Card key={item.id} className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border)}>
-                    <CardContent className="p-2 space-y-1">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExpiryDragEnd}>
+              <SortableContext items={displayExpiry.map((a: any) => a.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {displayExpiry.map((item: any) => {
+                    const color = getExpiryColor(item.expiry_date);
+                    return (
+                      <SortableRow key={item.id} id={item.id} reorderMode={reorderMode}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border, reorderMode && "ring-2 ring-primary/30")}>
+                          <CardContent className="p-2 space-y-1">
                       {/* Row 1: Number + actions */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
+                          {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
                           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color.dot)} />
                           <span className="font-medium text-xs text-foreground truncate" dir="ltr">{item.phone_number}</span>
                           {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
                         </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
+                        {!reorderMode && <div className="flex items-center gap-0.5 shrink-0">
                           <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md", color.bg, color.text)}>
                             {color.label}
                           </span>
@@ -578,7 +582,7 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>
+                        </div>}
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground pr-3">
@@ -587,11 +591,14 @@ export default function UnpaidNumbers() {
                         </span>
                         {item.notes && <span className="sm:hidden truncate max-w-[100px]">{item.notes}</span>}
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                          </CardContent>
+                        </Card>
+                      </SortableRow>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </TabsContent>
       </Tabs>
