@@ -677,3 +677,17 @@ export default function UnpaidNumbers() {
     </div>
   );
 }
+
+function SortableRow({ id, reorderMode, children }: { id: string; reorderMode: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !reorderMode });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...(reorderMode ? { ...attributes, ...listeners } : {})} className={reorderMode ? "cursor-grab active:cursor-grabbing touch-none select-none" : undefined}>
+      {children}
+    </div>
+  );
+}
