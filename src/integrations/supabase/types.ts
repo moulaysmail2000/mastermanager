@@ -134,6 +134,7 @@ export type Database = {
           id: string
           notes: string | null
           phone_number: string
+          sort_order: number
           start_date: string
           updated_at: string
           user_id: string
@@ -144,6 +145,7 @@ export type Database = {
           id?: string
           notes?: string | null
           phone_number?: string
+          sort_order?: number
           start_date?: string
           updated_at?: string
           user_id: string
@@ -154,6 +156,7 @@ export type Database = {
           id?: string
           notes?: string | null
           phone_number?: string
+          sort_order?: number
           start_date?: string
           updated_at?: string
           user_id?: string
@@ -329,6 +332,7 @@ export type Database = {
           created_at: string
           id: string
           phone_number: string
+          sort_order: number
           status: string
           updated_at: string
           user_id: string
@@ -337,6 +341,7 @@ export type Database = {
           created_at?: string
           id?: string
           phone_number?: string
+          sort_order?: number
           status?: string
           updated_at?: string
           user_id: string
@@ -345,6 +350,7 @@ export type Database = {
           created_at?: string
           id?: string
           phone_number?: string
+          sort_order?: number
           status?: string
           updated_at?: string
           user_id?: string
