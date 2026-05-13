@@ -99,7 +99,14 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`AI gateway error ${res.status}: ${text}`);
+      console.error(`AI gateway error ${res.status}: ${text}`);
+      const error =
+        res.status === 402
+          ? "نفدت أرصدة الذكاء الاصطناعي. يرجى إضافة رصيد."
+          : res.status === 429
+            ? "تم تجاوز الحد. حاول لاحقاً."
+            : "تعذّر توليد النصائح حالياً.";
+      return { quotes: [] as string[], error };
     }
 
     const json = await res.json();
@@ -136,5 +143,5 @@ export const generateDailyQuotes = createServerFn({ method: "POST" })
       })
       .filter((l) => !contradictsFacts(l));
 
-    return { quotes };
+    return { quotes, error: null as string | null };
   });
