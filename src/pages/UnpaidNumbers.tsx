@@ -374,60 +374,69 @@ export default function UnpaidNumbers() {
               <p className="text-muted-foreground text-sm">لا توجد أرقام</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {numbers.filter(n => filterStatus === "all" || (n as any).status === filterStatus).map((n) => {
-                const status = (n as any).status as StatusKey;
-                const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
-                return (
-                  <Card key={n.id} className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
-                    <CardContent className="p-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
-                        <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex gap-0.5 mr-2">
-                          {Object.entries(STATUS_CONFIG).map(([key, c]) => (
-                            <button
-                              key={key}
-                              title={c.label}
-                              onClick={() => key !== status && updateStatusMutation.mutate({ id: n.id, status: key })}
-                              className={cn(
-                                "h-3 w-3 rounded-full border-2 transition-all hover:scale-125",
-                                key === status ? cn(c.dot, "border-foreground/20") : "border-border/40 opacity-30 hover:opacity-100"
-                              )}
-                            >
-                              <span className={cn("block h-full w-full rounded-full", key !== status ? c.dot : "")} />
-                            </button>
-                          ))}
-                        </div>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        <WhatsAppBtn phone={n.phone_number} />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent dir="rtl">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                              <AlertDialogDescription>هل أنت متأكد من حذف الرقم {n.phone_number}؟</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-row-reverse gap-2">
-                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(n.id)}>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleUnpaidDragEnd}>
+              <SortableContext items={displayUnpaid.map((a: any) => a.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {displayUnpaid.map((n: any) => {
+                    const status = n.status as StatusKey;
+                    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
+                    return (
+                      <SortableRow key={n.id} id={n.id} reorderMode={reorderMode}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border, reorderMode && "ring-2 ring-primary/30")}>
+                          <CardContent className="p-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {reorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
+                              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
+                              <span className="font-medium text-xs text-foreground" dir="ltr">{n.phone_number}</span>
+                            </div>
+                            {!reorderMode && (
+                              <div className="flex items-center gap-1">
+                                <div className="flex gap-0.5 mr-2">
+                                  {Object.entries(STATUS_CONFIG).map(([key, c]) => (
+                                    <button
+                                      key={key}
+                                      title={c.label}
+                                      onClick={() => key !== status && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      className={cn(
+                                        "h-3 w-3 rounded-full border-2 transition-all hover:scale-125",
+                                        key === status ? cn(c.dot, "border-foreground/20") : "border-border/40 opacity-30 hover:opacity-100"
+                                      )}
+                                    >
+                                      <span className={cn("block h-full w-full rounded-full", key !== status ? c.dot : "")} />
+                                    </button>
+                                  ))}
+                                </div>
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <WhatsAppBtn phone={n.phone_number} />
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent dir="rtl">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                                      <AlertDialogDescription>هل أنت متأكد من حذف الرقم {n.phone_number}؟</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="flex-row-reverse gap-2">
+                                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(n.id)}>حذف</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </SortableRow>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </TabsContent>
 
