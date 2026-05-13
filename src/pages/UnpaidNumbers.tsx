@@ -329,8 +329,7 @@ export default function UnpaidNumbers() {
               <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب التبويبات"}
             </Button>
             {activeTab === "classification" && !adding && !reorderMode && (
-              <>
-                <Button
+              <Button
                   size="sm"
                   variant="outline"
                   className="gap-1.5"
@@ -347,15 +346,10 @@ export default function UnpaidNumbers() {
                   }}
                 >
                   <ClipboardPaste className="h-3.5 w-3.5" /> لصق
-                </Button>
-                <Button size="sm" onClick={() => setAdding(true)} className="gap-1.5">
-                  <Plus className="h-3.5 w-3.5" /> إضافة رقم
-                </Button>
-              </>
+              </Button>
             )}
             {activeTab === "expiry" && !addingExpiry && !reorderMode && (
-              <>
-                <Button
+              <Button
                   size="sm"
                   variant="outline"
                   className="gap-1.5"
@@ -373,11 +367,7 @@ export default function UnpaidNumbers() {
                   }}
                 >
                   <ClipboardPaste className="h-3.5 w-3.5" /> لصق
-                </Button>
-                <Button size="sm" onClick={() => setAddingExpiry(true)} className="gap-1.5">
-                  <Plus className="h-3.5 w-3.5" /> إضافة رقم
-                </Button>
-              </>
+              </Button>
             )}
           </div>
         </div>
