@@ -82,9 +82,18 @@ export default function FinanceArchive() {
       const allData: Record<string, any[]> = {};
 
       for (const table of tables) {
-        const { data, error } = await supabase.from(table).select("*");
-        if (error) throw error;
-        allData[table] = data || [];
+        const pageSize = 1000;
+        let from = 0;
+        const all: any[] = [];
+        while (true) {
+          const { data, error } = await supabase.from(table).select("*").range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        allData[table] = all;
       }
 
       let csv = "";
