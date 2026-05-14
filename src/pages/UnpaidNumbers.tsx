@@ -159,7 +159,8 @@ export default function UnpaidNumbers() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("unpaid_numbers").update({ status }).eq("id", id);
+      const sort_order = Math.floor(9999999999999 - Date.now());
+      const { error } = await supabase.from("unpaid_numbers").update({ status, sort_order }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم تحديث الحالة"); },
