@@ -471,7 +471,7 @@ export default function UnpaidNumbers() {
                                     <button
                                       key={key}
                                       title={c.label}
-                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      onClick={() => !active && setPendingStatusChange({ id: n.id, status: key as StatusKey, phone: n.phone_number })}
                                       className={cn(
                                         "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
                                         active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
