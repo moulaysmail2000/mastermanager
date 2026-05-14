@@ -339,7 +339,9 @@ export default function UnpaidNumbers() {
                       const text = await navigator.clipboard.readText();
                       const digits = (text || "").replace(/\D/g, "");
                       if (!digits || digits.length < 6) { toast.error("لا يوجد رقم في الحافظة"); return; }
-                      addMutation.mutate({ phone: digits, status: "waiting_account" });
+                      setNewNumber(digits);
+                      setNewStatus("waiting_account");
+                      setAdding(true);
                     } catch {
                       toast.error("تعذر قراءة الحافظة");
                     }
