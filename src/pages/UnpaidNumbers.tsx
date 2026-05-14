@@ -26,10 +26,10 @@ import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 
 const STATUS_CONFIG = {
-  not_paid: { label: "لم يدفع", icon: XCircle, dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive", solid: "bg-destructive text-destructive-foreground", ring: "ring-destructive/40" },
-  waiting_account: { label: "بانتظار حساب", icon: Hourglass, dot: "bg-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning", solid: "bg-warning text-warning-foreground", ring: "ring-warning/40" },
-  replace_account: { label: "تبديل حساب", icon: RefreshCw, dot: "bg-info", border: "border-info/30", bg: "bg-info/10", text: "text-info", solid: "bg-info text-info-foreground", ring: "ring-info/40" },
-  attention: { label: "انتباه", icon: AlertTriangle, dot: "bg-accent", border: "border-accent/30", bg: "bg-accent/10", text: "text-accent", solid: "bg-accent text-accent-foreground", ring: "ring-accent/40" },
+  not_paid:        { label: "لم يدفع",       icon: XCircle,       dot: "bg-red-500",     border: "border-red-500/40",     bg: "bg-red-500/10",     text: "text-red-600 dark:text-red-400",       solid: "bg-red-500 text-white",     ring: "ring-red-500/40" },
+  waiting_account: { label: "بانتظار حساب",  icon: Hourglass,     dot: "bg-amber-500",   border: "border-amber-500/40",   bg: "bg-amber-500/10",   text: "text-amber-600 dark:text-amber-400",   solid: "bg-amber-500 text-white",   ring: "ring-amber-500/40" },
+  replace_account: { label: "تبديل حساب",    icon: RefreshCw,     dot: "bg-sky-500",     border: "border-sky-500/40",     bg: "bg-sky-500/10",     text: "text-sky-600 dark:text-sky-400",       solid: "bg-sky-500 text-white",     ring: "ring-sky-500/40" },
+  attention:       { label: "انتباه",        icon: AlertTriangle, dot: "bg-fuchsia-500", border: "border-fuchsia-500/40", bg: "bg-fuchsia-500/10", text: "text-fuchsia-600 dark:text-fuchsia-400", solid: "bg-fuchsia-500 text-white", ring: "ring-fuchsia-500/40" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_CONFIG;
