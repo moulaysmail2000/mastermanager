@@ -605,27 +605,22 @@ export default function UnpaidNumbers() {
                     const color = getExpiryColor(item.expiry_date);
                     return (
                       <SortableRow key={item.id} id={item.id} reorderMode={false}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border)}>
-                          <CardContent className="p-2 space-y-1">
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", color.border, color.bg)}>
+                          <CardContent className="p-2 space-y-1" dir="ltr">
                       {/* Row 1: Number + actions */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color.dot)} />
-                          <span className="font-medium text-xs text-foreground truncate" dir="ltr">{item.phone_number}</span>
-                          {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md", color.bg, color.text)}>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className={cn("font-semibold text-sm truncate", color.text)} dir="ltr">{item.phone_number}</span>
+                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm text-white", color.dot)}>
                             {color.label}
                           </span>
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(item.phone_number)}>
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                          <WhatsAppBtn phone={item.phone_number} />
+                          {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                                <Trash2 className="h-3 w-3" />
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent dir="rtl">
@@ -639,6 +634,7 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+                          <WhatsAppBtn phone={item.phone_number} />
                         </div>
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
