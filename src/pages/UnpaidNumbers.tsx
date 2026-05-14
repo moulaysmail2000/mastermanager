@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -175,6 +175,15 @@ export default function UnpaidNumbers() {
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم التأكيد"); },
     onError: () => toast.error("فشل التأكيد"),
+  });
+
+  const undoConfirmMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from("unpaid_numbers").update({ sort_order: 0 }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم التراجع"); },
+    onError: () => toast.error("فشل التراجع"),
   });
 
   const deleteMutation = useMutation({
@@ -467,9 +476,10 @@ export default function UnpaidNumbers() {
                   {displayUnpaid.map((n: any) => {
                     const status = n.status as StatusKey;
                     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
+                    const isConfirmed = (n.sort_order ?? 0) > 1000000;
                     return (
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
-                        <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
+                        <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg, isConfirmed && "opacity-50 grayscale")}>
                           <CardContent className="p-2 flex items-center gap-2" dir="ltr">
                             <WhatsAppBtn phone={n.phone_number} />
                             <div className="flex items-center gap-1 shrink-0">
@@ -496,15 +506,27 @@ export default function UnpaidNumbers() {
                               </span>
                               <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
                             </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 shrink-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
-                              title="تم"
-                              onClick={() => setPendingStatusChange({ id: n.id, status: status, phone: n.phone_number })}
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                            </Button>
+                            {isConfirmed ? (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                                title="تراجع"
+                                onClick={() => undoConfirmMutation.mutate({ id: n.id })}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 shrink-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                                title="تم"
+                                onClick={() => setPendingStatusChange({ id: n.id, status: status, phone: n.phone_number })}
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </Button>
+                            )}
                             <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
