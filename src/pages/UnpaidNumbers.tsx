@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -471,7 +471,7 @@ export default function UnpaidNumbers() {
                                     <button
                                       key={key}
                                       title={c.label}
-                                      onClick={() => !active && setPendingStatusChange({ id: n.id, status: key as StatusKey, phone: n.phone_number })}
+                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
                                       className={cn(
                                         "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
                                         active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
