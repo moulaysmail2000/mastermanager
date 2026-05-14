@@ -711,7 +711,7 @@ export default function UnpaidNumbers() {
         </TabsContent>
       </Tabs>
 
-      {/* Camera FAB */}
+      {/* Camera capture input (kept hidden for any other triggers) */}
       <input
         ref={fileInputRef}
         type="file"
@@ -720,18 +720,6 @@ export default function UnpaidNumbers() {
         className="hidden"
         onChange={handleCameraCapture}
       />
-      <button
-        onClick={() => {
-          setCameraStep("capture");
-          setCameraNumber("");
-          setCameraDuration(null);
-          setCameraOpen(true);
-          setTimeout(() => fileInputRef.current?.click(), 100);
-        }}
-        className="fixed bottom-6 left-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center transition-transform hover:scale-110"
-      >
-        {cameraProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
-      </button>
 
       {/* Camera confirm dialog */}
       <Dialog open={cameraOpen && cameraStep === "confirm"} onOpenChange={(open) => { if (!open) { setCameraOpen(false); setCameraStep("capture"); } }}>
