@@ -443,11 +443,14 @@ export default function UnpaidNumbers() {
                     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
                     return (
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
-                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
+                        <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
                           <CardContent className="p-2 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                               <span className={cn("h-2 w-2 rounded-full shrink-0", cfg.dot)} />
                               <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
+                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0", cfg.bg, cfg.text, "border", cfg.border)}>
+                                {cfg.label}
+                              </span>
                             </div>
                               <div className="flex items-center gap-1">
                                 <div className="flex gap-1 mr-1">
