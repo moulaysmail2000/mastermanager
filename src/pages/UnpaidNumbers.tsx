@@ -742,6 +742,27 @@ export default function UnpaidNumbers() {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!pendingStatusChange} onOpenChange={(o) => !o && setPendingStatusChange(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تغيير الحالة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل تريد تغيير حالة الرقم {pendingStatusChange?.phone} إلى "{pendingStatusChange ? STATUS_CONFIG[pendingStatusChange.status].label : ""}"؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingStatusChange) {
+                  updateStatusMutation.mutate({ id: pendingStatusChange.id, status: pendingStatusChange.status });
+                  setPendingStatusChange(null);
+                }
+              }}
+            >تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
