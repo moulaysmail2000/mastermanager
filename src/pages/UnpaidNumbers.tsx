@@ -496,6 +496,15 @@ export default function UnpaidNumbers() {
                               </span>
                               <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
                             </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 shrink-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                              title="تم"
+                              onClick={() => setPendingStatusChange({ id: n.id, status: status, phone: n.phone_number })}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
