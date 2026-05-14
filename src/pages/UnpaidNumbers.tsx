@@ -55,11 +55,11 @@ function WhatsAppBtn({ phone }: { phone: string }) {
     <Button
       size="icon"
       variant="ghost"
-      className="h-6 w-6 text-[#25D366] hover:text-[#1ebe57] hover:bg-[#25D366]/10"
+      className="h-7 w-7 rounded-full bg-[#25D366] text-white hover:bg-[#1ebe57] hover:text-white shadow-md hover:scale-110 transition-transform shrink-0"
       onClick={() => openWhatsAppDirect(phone)}
       title="فتح في واتساب"
     >
-      <svg viewBox="0 0 32 32" className="h-3.5 w-3.5" fill="currentColor">
+      <svg viewBox="0 0 32 32" className="h-4 w-4" fill="currentColor">
         <path d="M16 .396C7.164.396 0 7.56 0 16.396c0 2.836.744 5.612 2.156 8.052L.06 31.604l7.34-2.06a15.93 15.93 0 0 0 8.6 2.456h.004c8.836 0 16-7.164 16-16S24.836.396 16 .396zm7.232 19.316c-.396-.2-2.348-1.16-2.712-1.292-.364-.132-.628-.2-.892.2s-1.024 1.292-1.256 1.556c-.232.264-.46.296-.856.1-.396-.2-1.672-.616-3.184-1.964-1.176-1.048-1.972-2.344-2.204-2.74-.232-.396-.024-.612.176-.808.18-.18.396-.46.596-.692.2-.232.264-.396.396-.66.132-.264.064-.492-.032-.692-.1-.2-.892-2.148-1.224-2.94-.32-.764-.648-.66-.892-.672-.232-.012-.496-.012-.76-.012a1.46 1.46 0 0 0-1.06.496c-.364.396-1.388 1.356-1.388 3.304s1.42 3.832 1.62 4.096c.2.264 2.796 4.268 6.78 5.984.948.408 1.688.652 2.264.836.952.304 1.816.26 2.5.16.764-.116 2.348-.96 2.68-1.888.328-.928.328-1.724.232-1.888-.1-.164-.364-.264-.76-.464z"/>
       </svg>
     </Button>
@@ -445,6 +445,7 @@ export default function UnpaidNumbers() {
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
                         <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
                           <CardContent className="p-2 flex items-center gap-2" dir="ltr">
+                            <WhatsAppBtn phone={n.phone_number} />
                             <div className="flex items-center gap-1 shrink-0">
                               <div className="flex gap-1">
                                 {Object.entries(STATUS_CONFIG).map(([key, c]) => {
@@ -462,7 +463,6 @@ export default function UnpaidNumbers() {
                                   );
                                 })}
                               </div>
-                              <WhatsAppBtn phone={n.phone_number} />
                             </div>
                             <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
                               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
