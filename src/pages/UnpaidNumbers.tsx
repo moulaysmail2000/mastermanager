@@ -445,11 +445,30 @@ export default function UnpaidNumbers() {
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
                         <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
                           <CardContent className="p-2 flex items-center gap-2" dir="ltr">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <div className="flex gap-1">
+                                {Object.entries(STATUS_CONFIG).map(([key, c]) => {
+                                  const active = key === status;
+                                  return (
+                                    <button
+                                      key={key}
+                                      title={c.label}
+                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      className={cn(
+                                        "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
+                                        active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
+                                      )}
+                                    />
+                                  );
+                                })}
+                              </div>
+                              <WhatsAppBtn phone={n.phone_number} />
+                            </div>
+                            <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
                               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
                                 {cfg.label}
                               </span>
+                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
                             </div>
                             <AlertDialog>
                                   <AlertDialogTrigger asChild>
@@ -468,25 +487,6 @@ export default function UnpaidNumbers() {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
-                            <div className="flex items-center gap-1 shrink-0 ml-auto">
-                              <div className="flex gap-1 mr-1">
-                                {Object.entries(STATUS_CONFIG).map(([key, c]) => {
-                                  const active = key === status;
-                                  return (
-                                    <button
-                                      key={key}
-                                      title={c.label}
-                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
-                                      className={cn(
-                                        "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
-                                        active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
-                                      )}
-                                    />
-                                  );
-                                })}
-                              </div>
-                              <WhatsAppBtn phone={n.phone_number} />
-                            </div>
                           </CardContent>
                         </Card>
                       </SortableRow>
@@ -609,15 +609,15 @@ export default function UnpaidNumbers() {
                           <CardContent className="p-2 space-y-1" dir="ltr">
                       {/* Row 1: Number + actions */}
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className={cn("font-semibold text-sm truncate", color.text)} dir="ltr">{item.phone_number}</span>
+                        <WhatsAppBtn phone={item.phone_number} />
+                        <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                          {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{item.notes} —</span>}
                           <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm text-white", color.dot)}>
                             {color.label}
                           </span>
-                          {item.notes && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">— {item.notes}</span>}
+                          <span className={cn("font-semibold text-sm truncate", color.text)} dir="ltr">{item.phone_number}</span>
                         </div>
-                        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
-                          <AlertDialog>
+                        <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -634,8 +634,6 @@ export default function UnpaidNumbers() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                          <WhatsAppBtn phone={item.phone_number} />
-                        </div>
                       </div>
                       {/* Row 2: Dates + notes (mobile) */}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground pr-3">
