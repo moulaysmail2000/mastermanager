@@ -443,21 +443,15 @@ export default function UnpaidNumbers() {
                     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.waiting_account;
                     return (
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
-                        <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
+                        <Card className={cn("border-r-4 transition-colors hover:bg-muted/20", cfg.border)}>
                           <CardContent className="p-2 flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
-                              <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center shrink-0 shadow-sm ring-2", cfg.solid, cfg.ring)}>
-                                <cfg.icon className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-semibold text-xs text-foreground truncate" dir="ltr">{n.phone_number}</span>
-                                <span className={cn("text-[10px] font-medium leading-tight", cfg.text)}>{cfg.label}</span>
-                              </div>
+                              <span className={cn("h-2 w-2 rounded-full shrink-0", cfg.dot)} />
+                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
                             </div>
                               <div className="flex items-center gap-1">
-                                <div className="flex gap-0.5 mr-1">
+                                <div className="flex gap-1 mr-1">
                                   {Object.entries(STATUS_CONFIG).map(([key, c]) => {
-                                    const Icon = c.icon;
                                     const active = key === status;
                                     return (
                                       <button
@@ -465,12 +459,10 @@ export default function UnpaidNumbers() {
                                         title={c.label}
                                         onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
                                         className={cn(
-                                          "h-5 w-5 rounded-md flex items-center justify-center transition-all hover:scale-110",
-                                          active ? cn(c.solid, "shadow-sm") : "bg-muted/40 text-muted-foreground/60 hover:bg-muted"
+                                          "h-3 w-3 rounded-full transition-all hover:scale-125",
+                                          active ? cn(c.dot, "ring-2 ring-foreground/30") : cn(c.dot, "opacity-25 hover:opacity-100")
                                         )}
-                                      >
-                                        <Icon className="h-2.5 w-2.5" />
-                                      </button>
+                                      />
                                     );
                                   })}
                                 </div>
