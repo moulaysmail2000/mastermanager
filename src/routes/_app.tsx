@@ -30,6 +30,8 @@ const items = [
 
 const NAV_ORDER_KEY = "nav_order_v1";
 const WALLET_URL = "/friend-accounts";
+const ARCHIVE_URL = "/finance-archive";
+const PINNED_URLS = [ARCHIVE_URL, WALLET_URL];
 
 function AppLayout() {
   const navigate = useNavigate();
@@ -40,10 +42,10 @@ function AppLayout() {
   const [refreshing, setRefreshing] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [order, setOrder] = useState<string[]>(() => {
-    if (typeof window === "undefined") return items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
+    if (typeof window === "undefined") return items.filter(i => !PINNED_URLS.includes(i.url)).map(i => i.url as string);
     try {
       const saved = JSON.parse(localStorage.getItem(NAV_ORDER_KEY) || "null");
-      const defaultOrder = items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
+      const defaultOrder = items.filter(i => !PINNED_URLS.includes(i.url)).map(i => i.url as string);
       if (Array.isArray(saved)) {
         const valid = saved.filter((u: string) => defaultOrder.includes(u));
         const missing = defaultOrder.filter(u => !valid.includes(u));
@@ -51,7 +53,7 @@ function AppLayout() {
       }
       return defaultOrder;
     } catch {
-      return items.filter(i => i.url !== WALLET_URL).map(i => i.url as string);
+      return items.filter(i => !PINNED_URLS.includes(i.url)).map(i => i.url as string);
     }
   });
 
@@ -206,22 +208,35 @@ function AppLayout() {
             </SortableContext>
           </DndContext>
           {(() => {
-            const wallet = items.find(i => i.url === "/friend-accounts")!;
-            const isActive = location.pathname === wallet.url;
+          {(() => {
+            const archive = items.find(i => i.url === ARCHIVE_URL)!;
+            const wallet = items.find(i => i.url === WALLET_URL)!;
+            const renderPinned = (item: typeof archive, withAuto: boolean) => {
+              const isActive = location.pathname === item.url;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.url}
+                  onClick={() => navigate({ to: item.url as any })}
+                  title={item.title}
+                  className={cn(
+                    "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
+                    withAuto && "mr-auto",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.title}</span>
+                </button>
+              );
+            };
             return (
-              <button
-                onClick={() => navigate({ to: wallet.url as any })}
-                title={wallet.title}
-                className={cn(
-                  "mr-auto relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                )}
-              >
-                <wallet.icon className="h-4 w-4 shrink-0" />
-                <span>{wallet.title}</span>
-              </button>
+              <>
+                {renderPinned(archive, true)}
+                {renderPinned(wallet, false)}
+              </>
             );
           })()}
         </nav>
