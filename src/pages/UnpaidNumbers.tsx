@@ -445,6 +445,12 @@ export default function UnpaidNumbers() {
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
                         <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
                           <CardContent className="p-2 flex items-center gap-2" dir="ltr">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
+                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
+                                {cfg.label}
+                              </span>
+                            </div>
                             <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
@@ -462,13 +468,7 @@ export default function UnpaidNumbers() {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
-                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
-                                {cfg.label}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1 shrink-0 ml-auto">
                               <div className="flex gap-1 mr-1">
                                 {Object.entries(STATUS_CONFIG).map(([key, c]) => {
                                   const active = key === status;
@@ -485,9 +485,6 @@ export default function UnpaidNumbers() {
                                   );
                                 })}
                               </div>
-                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
-                                <Copy className="h-3 w-3" />
-                              </Button>
                               <WhatsAppBtn phone={n.phone_number} />
                             </div>
                           </CardContent>
