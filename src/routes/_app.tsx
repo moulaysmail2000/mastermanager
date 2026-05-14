@@ -233,8 +233,8 @@ function AppLayout() {
             };
             return (
               <>
-                {renderPinned(archive, true)}
-                {renderPinned(wallet, false)}
+                {renderPinned(wallet, true)}
+                {renderPinned(archive, false)}
               </>
             );
           })()}
