@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -26,10 +26,10 @@ import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 
 const STATUS_CONFIG = {
-  not_paid: { label: "لم يدفع", dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" },
-  waiting_account: { label: "بانتظار حساب", dot: "bg-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning" },
-  replace_account: { label: "تبديل حساب", dot: "bg-info", border: "border-info/30", bg: "bg-info/10", text: "text-info" },
-  attention: { label: "انتباه", dot: "bg-accent", border: "border-accent/30", bg: "bg-accent/10", text: "text-accent" },
+  not_paid: { label: "لم يدفع", icon: XCircle, dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive", solid: "bg-destructive text-destructive-foreground", ring: "ring-destructive/40" },
+  waiting_account: { label: "بانتظار حساب", icon: Hourglass, dot: "bg-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning", solid: "bg-warning text-warning-foreground", ring: "ring-warning/40" },
+  replace_account: { label: "تبديل حساب", icon: RefreshCw, dot: "bg-info", border: "border-info/30", bg: "bg-info/10", text: "text-info", solid: "bg-info text-info-foreground", ring: "ring-info/40" },
+  attention: { label: "انتباه", icon: AlertTriangle, dot: "bg-accent", border: "border-accent/30", bg: "bg-accent/10", text: "text-accent", solid: "bg-accent text-accent-foreground", ring: "ring-accent/40" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_CONFIG;
