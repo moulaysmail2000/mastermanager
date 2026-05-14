@@ -208,7 +208,6 @@ function AppLayout() {
             </SortableContext>
           </DndContext>
           {(() => {
-          {(() => {
             const archive = items.find(i => i.url === ARCHIVE_URL)!;
             const wallet = items.find(i => i.url === WALLET_URL)!;
             const renderPinned = (item: typeof archive, withAuto: boolean) => {
