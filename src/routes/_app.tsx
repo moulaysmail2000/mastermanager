@@ -210,7 +210,7 @@ function AppLayout() {
           {(() => {
             const archive = items.find(i => i.url === ARCHIVE_URL)!;
             const wallet = items.find(i => i.url === WALLET_URL)!;
-            const renderPinned = (item: typeof archive, withAuto: boolean) => {
+            const renderPinned = (item: { title: string; url: string; icon: any }, withAuto: boolean) => {
               const isActive = location.pathname === item.url;
               const Icon = item.icon;
               return (
