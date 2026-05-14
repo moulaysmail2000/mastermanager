@@ -169,7 +169,7 @@ export default function UnpaidNumbers() {
 
   const confirmDoneMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const sort_order = Math.floor(9999999999999 - Date.now());
+      const sort_order = 2147483647 - Math.floor(Date.now() / 1000);
       const { error } = await supabase.from("unpaid_numbers").update({ sort_order }).eq("id", id);
       if (error) throw error;
     },
