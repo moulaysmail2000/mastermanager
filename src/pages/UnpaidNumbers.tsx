@@ -26,10 +26,10 @@ import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 
 const STATUS_CONFIG = {
-  not_paid: { label: "لم يدفع", icon: XCircle, dot: "bg-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive", solid: "bg-destructive text-destructive-foreground", ring: "ring-destructive/40" },
-  waiting_account: { label: "بانتظار حساب", icon: Hourglass, dot: "bg-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning", solid: "bg-warning text-warning-foreground", ring: "ring-warning/40" },
-  replace_account: { label: "تبديل حساب", icon: RefreshCw, dot: "bg-info", border: "border-info/30", bg: "bg-info/10", text: "text-info", solid: "bg-info text-info-foreground", ring: "ring-info/40" },
-  attention: { label: "انتباه", icon: AlertTriangle, dot: "bg-accent", border: "border-accent/30", bg: "bg-accent/10", text: "text-accent", solid: "bg-accent text-accent-foreground", ring: "ring-accent/40" },
+  not_paid:        { label: "لم يدفع",       icon: XCircle,       dot: "bg-red-500",     border: "border-red-500/40",     bg: "bg-red-500/10",     text: "text-red-600 dark:text-red-400",       solid: "bg-red-500 text-white",     ring: "ring-red-500/40" },
+  waiting_account: { label: "بانتظار حساب",  icon: Hourglass,     dot: "bg-amber-500",   border: "border-amber-500/40",   bg: "bg-amber-500/10",   text: "text-amber-600 dark:text-amber-400",   solid: "bg-amber-500 text-white",   ring: "ring-amber-500/40" },
+  replace_account: { label: "تبديل حساب",    icon: RefreshCw,     dot: "bg-sky-500",     border: "border-sky-500/40",     bg: "bg-sky-500/10",     text: "text-sky-600 dark:text-sky-400",       solid: "bg-sky-500 text-white",     ring: "ring-sky-500/40" },
+  attention:       { label: "انتباه",        icon: AlertTriangle, dot: "bg-fuchsia-500", border: "border-fuchsia-500/40", bg: "bg-fuchsia-500/10", text: "text-fuchsia-600 dark:text-fuchsia-400", solid: "bg-fuchsia-500 text-white", ring: "ring-fuchsia-500/40" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_CONFIG;
@@ -444,39 +444,11 @@ export default function UnpaidNumbers() {
                     return (
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
                         <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
-                          <CardContent className="p-2 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={cn("h-2 w-2 rounded-full shrink-0", cfg.dot)} />
-                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
-                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0", cfg.bg, cfg.text, "border", cfg.border)}>
-                                {cfg.label}
-                              </span>
-                            </div>
-                              <div className="flex items-center gap-1">
-                                <div className="flex gap-1 mr-1">
-                                  {Object.entries(STATUS_CONFIG).map(([key, c]) => {
-                                    const active = key === status;
-                                    return (
-                                      <button
-                                        key={key}
-                                        title={c.label}
-                                        onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
-                                        className={cn(
-                                          "h-3 w-3 rounded-full transition-all hover:scale-125",
-                                          active ? cn(c.dot, "ring-2 ring-foreground/30") : cn(c.dot, "opacity-25 hover:opacity-100")
-                                        )}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                <WhatsAppBtn phone={n.phone_number} />
-                                <AlertDialog>
+                          <CardContent className="p-2 flex items-center gap-2" dir="ltr">
+                            <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                                      <Trash2 className="h-3 w-3" />
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                                      <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent dir="rtl">
@@ -490,7 +462,34 @@ export default function UnpaidNumbers() {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
+                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
+                                {cfg.label}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <div className="flex gap-1 mr-1">
+                                {Object.entries(STATUS_CONFIG).map(([key, c]) => {
+                                  const active = key === status;
+                                  return (
+                                    <button
+                                      key={key}
+                                      title={c.label}
+                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      className={cn(
+                                        "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
+                                        active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
+                                      )}
+                                    />
+                                  );
+                                })}
                               </div>
+                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              <WhatsAppBtn phone={n.phone_number} />
+                            </div>
                           </CardContent>
                         </Card>
                       </SortableRow>
