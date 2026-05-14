@@ -78,7 +78,7 @@ export default function FinanceArchive() {
   const handleExportAll = async () => {
     setExporting(true);
     try {
-      const tables = ["account_categories", "financial_transactions", "capcut_accounts", "bank_accounts", "prices", "unpaid_numbers", "message_templates", "expiry_dates", "friend_accounts", "friend_transactions"] as const;
+      const tables = ["account_categories", "financial_transactions", "capcut_accounts", "bank_accounts", "prices", "unpaid_numbers", "message_templates", "expiry_dates", "friend_accounts", "friend_transactions", "user_settings"] as const;
       const allData: Record<string, any[]> = {};
 
       for (const table of tables) {
@@ -100,6 +100,7 @@ export default function FinanceArchive() {
           expiry_dates: "تواريخ الانتهاء",
           friend_accounts: "حسابات الأصدقاء",
           friend_transactions: "معاملات الأصدقاء",
+          user_settings: "الإعدادات",
         }[table] || table;
 
         csv += `\n=== ${tableLabel} (${table}) ===\n`;
