@@ -444,39 +444,11 @@ export default function UnpaidNumbers() {
                     return (
                       <SortableRow key={n.id} id={n.id} reorderMode={false}>
                         <Card className={cn("border-r-4 transition-all hover:shadow-md", cfg.border, cfg.bg)}>
-                          <CardContent className="p-2 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={cn("h-2 w-2 rounded-full shrink-0", cfg.dot)} />
-                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
-                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0", cfg.bg, cfg.text, "border", cfg.border)}>
-                                {cfg.label}
-                              </span>
-                            </div>
-                              <div className="flex items-center gap-1">
-                                <div className="flex gap-1 mr-1">
-                                  {Object.entries(STATUS_CONFIG).map(([key, c]) => {
-                                    const active = key === status;
-                                    return (
-                                      <button
-                                        key={key}
-                                        title={c.label}
-                                        onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
-                                        className={cn(
-                                          "h-3 w-3 rounded-full transition-all hover:scale-125",
-                                          active ? cn(c.dot, "ring-2 ring-foreground/30") : cn(c.dot, "opacity-25 hover:opacity-100")
-                                        )}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                <WhatsAppBtn phone={n.phone_number} />
-                                <AlertDialog>
+                          <CardContent className="p-2 flex items-center gap-2" dir="ltr">
+                            <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                                      <Trash2 className="h-3 w-3" />
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                                      <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent dir="rtl">
@@ -490,7 +462,34 @@ export default function UnpaidNumbers() {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className={cn("font-semibold text-sm truncate", cfg.text)} dir="ltr">{n.phone_number}</span>
+                              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-sm", cfg.solid)}>
+                                {cfg.label}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <div className="flex gap-1 mr-1">
+                                {Object.entries(STATUS_CONFIG).map(([key, c]) => {
+                                  const active = key === status;
+                                  return (
+                                    <button
+                                      key={key}
+                                      title={c.label}
+                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      className={cn(
+                                        "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
+                                        active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
+                                      )}
+                                    />
+                                  );
+                                })}
                               </div>
+                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(n.phone_number)}>
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              <WhatsAppBtn phone={n.phone_number} />
+                            </div>
                           </CardContent>
                         </Card>
                       </SortableRow>
