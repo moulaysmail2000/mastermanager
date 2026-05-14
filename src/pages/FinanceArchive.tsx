@@ -170,7 +170,7 @@ export default function FinanceArchive() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("يجب تسجيل الدخول");
 
-      const allowed = ["account_categories", "financial_transactions", "capcut_accounts", "bank_accounts", "prices", "unpaid_numbers", "message_templates", "expiry_dates", "friend_accounts", "friend_transactions"] as const;
+      const allowed = ["account_categories", "financial_transactions", "capcut_accounts", "bank_accounts", "prices", "unpaid_numbers", "message_templates", "expiry_dates", "friend_accounts", "friend_transactions", "user_settings"] as const;
       const sections = text.split(/\n=== .*? \((.*?)\) ===\n/);
       let totalInserted = 0;
       const errors: string[] = [];
@@ -185,6 +185,7 @@ export default function FinanceArchive() {
         expiry_dates: new Set(["phone_number"]),
         friend_accounts: new Set(["owner_name", "bank_name"]),
         friend_transactions: new Set(["type"]),
+        user_settings: new Set(["setting_key", "setting_value"]),
       };
       const skipFields = new Set(["created_at", "updated_at"]);
 
@@ -235,12 +236,20 @@ export default function FinanceArchive() {
       for (const table of allowed) {
         const rows = tableData[table];
         if (!rows || rows.length === 0) continue;
-        const { error } = await supabase.from(table).upsert(rows, { onConflict: "id" });
-        if (error) {
-          errors.push(`${table}: ${error.message}`);
-          continue;
+        const chunkSize = 500;
+        let inserted = 0;
+        let failed = false;
+        for (let i = 0; i < rows.length; i += chunkSize) {
+          const chunk = rows.slice(i, i + chunkSize);
+          const { error } = await supabase.from(table).upsert(chunk, { onConflict: "id" });
+          if (error) {
+            errors.push(`${table}: ${error.message}`);
+            failed = true;
+            break;
+          }
+          inserted += chunk.length;
         }
-        totalInserted += rows.length;
+        if (!failed) totalInserted += inserted;
       }
       if (errors.length) throw new Error(errors.join(" | "));
 
