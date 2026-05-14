@@ -119,6 +119,7 @@ export default function UnpaidNumbers() {
   const [reorderMode, setReorderMode] = useState(false);
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -159,7 +160,8 @@ export default function UnpaidNumbers() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("unpaid_numbers").update({ status }).eq("id", id);
+      const sort_order = Math.floor(9999999999999 - Date.now());
+      const { error } = await supabase.from("unpaid_numbers").update({ status, sort_order }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["unpaid_numbers"] }); toast.success("تم تحديث الحالة"); },
@@ -469,7 +471,7 @@ export default function UnpaidNumbers() {
                                     <button
                                       key={key}
                                       title={c.label}
-                                      onClick={() => !active && updateStatusMutation.mutate({ id: n.id, status: key })}
+                                      onClick={() => !active && setPendingStatusChange({ id: n.id, status: key as StatusKey, phone: n.phone_number })}
                                       className={cn(
                                         "h-3.5 w-3.5 rounded-full transition-all hover:scale-125",
                                         active ? cn(c.dot, "ring-2 ring-foreground/40 shadow") : cn(c.dot, "opacity-30 hover:opacity-100")
@@ -740,6 +742,27 @@ export default function UnpaidNumbers() {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!pendingStatusChange} onOpenChange={(o) => !o && setPendingStatusChange(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تغيير الحالة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل تريد تغيير حالة الرقم {pendingStatusChange?.phone} إلى "{pendingStatusChange ? STATUS_CONFIG[pendingStatusChange.status].label : ""}"؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingStatusChange) {
+                  updateStatusMutation.mutate({ id: pendingStatusChange.id, status: pendingStatusChange.status });
+                  setPendingStatusChange(null);
+                }
+              }}
+            >تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
