@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,7 +86,16 @@ export default function UnpaidNumbers() {
   const queryClient = useQueryClient();
   const copy = useCopy();
   const [newNumber, setNewNumber] = useState("");
-  const [newStatus, setNewStatus] = useState<StatusKey>("waiting_account");
+  const [newStatus, setNewStatus] = useState<StatusKey>(() => {
+    try {
+      const saved = localStorage.getItem("unpaid_last_status");
+      if (saved && saved in STATUS_CONFIG) return saved as StatusKey;
+    } catch {}
+    return "waiting_account";
+  });
+  useEffect(() => {
+    try { localStorage.setItem("unpaid_last_status", newStatus); } catch {}
+  }, [newStatus]);
   const [adding, setAdding] = useState(false);
   const [addingExpiry, setAddingExpiry] = useState(false);
   const [newExpiryNumber, setNewExpiryNumber] = useState("");
@@ -346,9 +355,8 @@ export default function UnpaidNumbers() {
                       const text = await navigator.clipboard.readText();
                       const digits = (text || "").replace(/\D/g, "");
                       if (!digits || digits.length < 6) { toast.error("لا يوجد رقم في الحافظة"); return; }
-                      setNewNumber(digits);
-                      setNewStatus("waiting_account");
-                      setAdding(true);
+                       setNewNumber(digits);
+                       setAdding(true);
                     } catch {
                       toast.error("تعذر قراءة الحافظة");
                     }
