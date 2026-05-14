@@ -763,9 +763,12 @@ export default function UnpaidNumbers() {
       <AlertDialog open={!!pendingStatusChange} onOpenChange={(o) => !o && setPendingStatusChange(null)}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد تغيير الحالة</AlertDialogTitle>
+            <AlertDialogTitle>تأكيد الإنجاز</AlertDialogTitle>
             <AlertDialogDescription>
-              هل تريد تغيير حالة الرقم {pendingStatusChange?.phone} إلى "{pendingStatusChange ? STATUS_CONFIG[pendingStatusChange.status].label : ""}"؟
+              {pendingStatusChange?.status === "replace_account" && `هل تأكيد أن الرقم ${pendingStatusChange?.phone} استلم الحساب الجديد؟`}
+              {pendingStatusChange?.status === "not_paid" && `هل تأكيد أن الرقم ${pendingStatusChange?.phone} قام بالدفع؟`}
+              {pendingStatusChange?.status === "waiting_account" && `هل تأكيد أن الرقم ${pendingStatusChange?.phone} استلم الحساب؟`}
+              {pendingStatusChange?.status === "attention" && `هل تأكيد معالجة الرقم ${pendingStatusChange?.phone}؟`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
@@ -773,7 +776,7 @@ export default function UnpaidNumbers() {
             <AlertDialogAction
               onClick={() => {
                 if (pendingStatusChange) {
-                  updateStatusMutation.mutate({ id: pendingStatusChange.id, status: pendingStatusChange.status });
+                  confirmDoneMutation.mutate({ id: pendingStatusChange.id });
                   setPendingStatusChange(null);
                 }
               }}
