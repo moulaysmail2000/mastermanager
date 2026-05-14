@@ -119,6 +119,7 @@ export default function UnpaidNumbers() {
   const [reorderMode, setReorderMode] = useState(false);
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
