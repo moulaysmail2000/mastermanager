@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload } from "lucide-react";
+import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -119,7 +119,7 @@ export default function CapcutAccounts() {
   const { data: settings } = useQuery({
     queryKey: ["user_settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_settings").select("*").in("setting_key", ["shared_password", "message_template"]);
+      const { data, error } = await supabase.from("user_settings").select("*").in("setting_key", ["shared_password", "message_template", "triple_delivery"]);
       if (error) throw error;
       const map: Record<string, string> = {};
       data.forEach((s: any) => { map[s.setting_key] = s.setting_value; });
@@ -129,6 +129,8 @@ export default function CapcutAccounts() {
 
   const sharedPassword = settings?.shared_password || "";
   const messageTemplate = settings?.message_template || DEFAULT_MESSAGE;
+  const tripleMode = settings?.triple_delivery === "1";
+  const deliveryLimit = tripleMode ? 3 : 2;
 
   const saveSettingMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
@@ -373,15 +375,15 @@ export default function CapcutAccounts() {
       : `${account.username}\n${account.password_or_code}`;
     await copy(textToCopy);
     const newCount = (account.delivered_count || 0) + 1;
-    const newStatus = newCount >= 2 ? "مباع" : "متاح";
+    const newStatus = newCount >= deliveryLimit ? "مباع" : "متاح";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
-    toast.success(`تم النسخ (${newCount}/2)`);
+    toast.success(`تم النسخ (${newCount}/${deliveryLimit})`);
   };
 
   const handleUndoDeliver = async (account: CapcutAccount) => {
     const newCount = Math.max(0, (account.delivered_count || 0) - 1);
-    const newStatus = newCount < 2 ? "متاح" : "مباع";
+    const newStatus = newCount < deliveryLimit ? "متاح" : "مباع";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
     toast.success("تم التراجع");
@@ -471,6 +473,18 @@ export default function CapcutAccounts() {
             className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-border text-[10px] sm:text-xs font-medium text-muted-foreground hover:text-foreground hover:border-border/80 transition-all whitespace-nowrap shrink-0"
           >
             <FileText className="h-3 w-3" /> رسالة التسليم
+          </button>
+          <button
+            onClick={() => saveSettingMutation.mutate({ key: "triple_delivery", value: tripleMode ? "0" : "1" })}
+            title={tripleMode ? "تسليم 3 مرات (مفعل)" : "تسليم مرتين (افتراضي)"}
+            className={cn(
+              "flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0",
+              tripleMode
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+            )}
+          >
+            <Repeat className="h-3 w-3" /> {tripleMode ? "3 مرات" : "مرتين"}
           </button>
           <button
             onClick={() => { setSelectionMode((m) => !m); setSelectedIds(new Set()); }}
