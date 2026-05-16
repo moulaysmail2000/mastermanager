@@ -247,7 +247,7 @@ export default function CapcutAccounts() {
         const blocks = text.split(/\n\s*-{3,}\s*\n|\r?\n\r?\n/);
         const parseBlock = (block: string) => {
           const emailMatch = block.match(/Account\s*[:：]\s*([^\s\r\n]+)/i) || block.match(EMAIL_RE);
-          const pwdMatch = block.match(/Password\s*[:：]\s*([^\s\r\n]+)/i);
+          const pwdMatch = block.match(/(?:Password|Remark|Pass|PWD)\s*[:：]\s*([^\s\r\n]+)/i);
           if (!emailMatch || !pwdMatch) return;
           const rawEmail = emailMatch[1] || emailMatch[0];
           const m = rawEmail.match(EMAIL_RE);
