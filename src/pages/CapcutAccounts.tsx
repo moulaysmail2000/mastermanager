@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat, ChevronDown } from "lucide-react";
+import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat, ChevronDown, LayoutGrid, Rows3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +68,13 @@ export default function CapcutAccounts() {
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState("");
   const [samePassword, setSamePassword] = useState(true);
+  const [viewMode, setViewMode] = useState<"table" | "cards">(() => {
+    if (typeof window === "undefined") return "table";
+    return (localStorage.getItem("capcut_view_mode") as "table" | "cards") || "table";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("capcut_view_mode", viewMode);
+  }, [viewMode]);
   const [perEmailPasswordOpen, setPerEmailPasswordOpen] = useState(false);
   const [perEmailPassword, setPerEmailPassword] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
@@ -507,6 +514,28 @@ export default function CapcutAccounts() {
           >
             {selectionMode ? "إلغاء" : "تحديد"}
           </button>
+          <div className="flex items-center rounded-lg border border-border p-0.5 shrink-0">
+            <button
+              onClick={() => setViewMode("table")}
+              title="عرض جدول"
+              className={cn(
+                "flex items-center justify-center h-6 w-7 rounded-md transition-all",
+                viewMode === "table" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Rows3 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("cards")}
+              title="عرض بطاقات"
+              className={cn(
+                "flex items-center justify-center h-6 w-7 rounded-md transition-all",
+                viewMode === "cards" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </button>
+          </div>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setBulkDeleteOpen(true)}
@@ -676,6 +705,100 @@ export default function CapcutAccounts() {
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <MonitorSmartphone className="h-10 w-10 text-muted-foreground/30" />
               <p className="text-muted-foreground text-sm">لا توجد حسابات في هذا التصنيف</p>
+            </div>
+          ) : viewMode === "cards" ? (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
+                {filtered.map((a) => {
+                  const count = a.delivered_count || 0;
+                  const isSold = a.status === "مباع";
+                  const isNotWorking = a.status === "لايشتغل";
+                  const rowLimit = getLimitForAccount(a);
+                  const isSelected = selectedIds.has(a.id);
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => { if (selectionMode) toggleSelect(a.id); }}
+                      className={cn(
+                        "group relative rounded-xl border bg-card p-2.5 flex flex-col gap-2 transition-all",
+                        isSold && "opacity-50",
+                        isNotWorking && "bg-destructive/5 border-destructive/30",
+                        isSelected ? "border-primary ring-2 ring-primary/30" : "border-border/60 hover:border-border",
+                        selectionMode && "cursor-pointer"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={cn(
+                          "h-2 w-2 rounded-full shrink-0",
+                          isNotWorking ? "bg-destructive" : isSold ? "bg-warning" : count > 0 ? "bg-warning" : "bg-success"
+                        )} />
+                        <div className="flex items-center gap-0.5">
+                          <UserCheck className={cn("h-3 w-3", count >= 1 ? "text-primary" : "text-muted-foreground/25")} />
+                          {rowLimit >= 2 && <UserCheck className={cn("h-3 w-3", count >= 2 ? "text-primary" : "text-muted-foreground/25")} />}
+                          {rowLimit >= 3 && <UserCheck className={cn("h-3 w-3", count >= 3 ? "text-primary" : "text-muted-foreground/25")} />}
+                        </div>
+                        {selectionMode && (
+                          <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(a.id)} className="h-3.5 w-3.5" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className={cn(
+                          "font-mono text-[11px] font-medium truncate",
+                          isNotWorking && "line-through text-muted-foreground"
+                        )} title={a.username}>
+                          {a.username}
+                        </div>
+                        <div className="font-mono text-[10px] text-muted-foreground truncate" title={a.password_or_code}>
+                          {a.password_or_code}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-warning disabled:opacity-30"
+                          onClick={(e) => { e.stopPropagation(); handleUndoDeliver(a); }}
+                          disabled={count === 0}
+                          title="تراجع"
+                        >
+                          <Undo2 className="h-3 w-3" />
+                        </Button>
+                        <div className="flex items-center gap-0.5">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground"
+                            onClick={(e) => { e.stopPropagation(); handleDeliver(a, "credentials"); }}
+                            disabled={isSold || isNotWorking}
+                            title="نسخ البيانات"
+                          >
+                            <ClipboardPaste className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-primary"
+                            onClick={(e) => { e.stopPropagation(); handleDeliver(a); }}
+                            disabled={isSold || isNotWorking}
+                            title="نسخ الرسالة"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3 px-3 py-2 rounded-lg border border-border/40 bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{filtered.length} حساب</span>
+                <button
+                  onClick={() => { setSelectionMode((m) => !m); setSelectedIds(new Set()); }}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {selectionMode ? "إلغاء التحديد" : "تحديد"}
+                </button>
+              </div>
             </div>
           ) : (
             <Card className="overflow-hidden border-border/50">
