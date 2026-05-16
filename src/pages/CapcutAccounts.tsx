@@ -538,17 +538,17 @@ export default function CapcutAccounts() {
               <TabsTrigger
                 value={UNCAT}
                 className={cn(
-                  "relative text-xs font-medium px-3 py-1.5 rounded-lg border flex flex-row-reverse items-center gap-1.5 transition-all",
+                  "relative text-xs font-medium px-3 py-1.5 rounded-full border-2 flex flex-row-reverse items-center gap-2 transition-all",
                   activeTab === UNCAT
-                    ? "bg-warning text-warning-foreground border-warning shadow-sm"
-                    : "bg-card text-muted-foreground border-warning/40 hover:border-warning/70 hover:text-foreground"
+                    ? "bg-card text-foreground border-warning shadow-[0_0_0_3px_hsl(var(--warning)/0.15)]"
+                    : "bg-card text-muted-foreground border-warning/30 hover:border-warning/60 hover:text-foreground"
                 )}
               >
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-2">
                   <span>بدون تصنيف</span>
                   <span className={cn(
-                    "inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded text-[9px] font-bold",
-                    activeTab === UNCAT ? "bg-warning-foreground/20" : "bg-warning/20 text-warning"
+                    "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums",
+                    activeTab === UNCAT ? "bg-warning/20 text-warning" : "bg-muted/60 text-muted-foreground"
                   )}>
                     {uncategorizedCount}
                   </span>
@@ -563,24 +563,24 @@ export default function CapcutAccounts() {
                   key={cat.id}
                   value={cat.id}
                   className={cn(
-                    "relative text-xs font-medium px-3 py-1.5 rounded-lg border flex flex-row-reverse items-center gap-1.5 group transition-all",
+                    "relative text-xs font-medium px-3 py-1.5 rounded-full border-2 flex flex-row-reverse items-center gap-2 group transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                      : "bg-card text-muted-foreground border-border/50 hover:border-primary/30 hover:text-foreground"
+                      ? "bg-card text-foreground border-success shadow-[0_0_0_3px_hsl(var(--success)/0.15)]"
+                      : "bg-card text-muted-foreground border-border/60 hover:border-success/50 hover:text-foreground"
                   )}
                 >
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-2">
                     <span>{cat.name}</span>
                     <span className={cn(
-                      "inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded text-[9px] font-bold",
-                      isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                      "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums",
+                      isActive ? "bg-muted text-foreground" : "bg-muted/60 text-muted-foreground"
                     )}>
                       {count}
                     </span>
                   </span>
                   <div className={cn("flex items-center gap-0.5 transition-opacity", "opacity-0 group-hover:opacity-100")}>
                     <button onClick={(e) => { e.stopPropagation(); setEditCategoryId(cat.id); setEditCategoryName(cat.name); }}
-                      className="p-0.5 rounded hover:bg-primary-foreground/10"><Pencil className="h-2.5 w-2.5" /></button>
+                      className="p-0.5 rounded hover:bg-muted"><Pencil className="h-2.5 w-2.5" /></button>
                     <button onClick={(e) => { e.stopPropagation(); setDeleteCategoryId(cat.id); }}
                       className="p-0.5 rounded hover:bg-destructive/20"><X className="h-2.5 w-2.5" /></button>
                   </div>
