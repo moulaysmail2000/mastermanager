@@ -68,6 +68,13 @@ export default function CapcutAccounts() {
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState("");
   const [samePassword, setSamePassword] = useState(true);
+  const [viewMode, setViewMode] = useState<"table" | "cards">(() => {
+    if (typeof window === "undefined") return "table";
+    return (localStorage.getItem("capcut_view_mode") as "table" | "cards") || "table";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("capcut_view_mode", viewMode);
+  }, [viewMode]);
   const [perEmailPasswordOpen, setPerEmailPasswordOpen] = useState(false);
   const [perEmailPassword, setPerEmailPassword] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
