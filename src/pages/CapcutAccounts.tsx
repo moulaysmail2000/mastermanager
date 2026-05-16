@@ -696,6 +696,9 @@ export default function CapcutAccounts() {
                               )}
                               <UserCheck className={`h-3.5 w-3.5 ${count >= 1 ? "text-primary" : "text-muted-foreground/20"}`} />
                               <UserCheck className={`h-3.5 w-3.5 ${count >= 2 ? "text-primary" : "text-muted-foreground/20"}`} />
+                              {tripleMode && (
+                                <UserCheck className={`h-3.5 w-3.5 ${count >= 3 ? "text-primary" : "text-muted-foreground/20"}`} />
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
