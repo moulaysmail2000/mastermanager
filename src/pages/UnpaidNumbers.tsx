@@ -311,14 +311,20 @@ export default function UnpaidNumbers() {
 
   const displayUnpaid = (() => {
     const filtered = (numbers as any[]).filter(n => filterStatus === "all" || n.status === filterStatus);
-    if (!orderedUnpaidIds) return filtered;
-    const map = new Map(filtered.map((a) => [a.id, a]));
+    const q = searchQuery.replace(/\D/g, "");
+    const searched = q ? filtered.filter((n: any) => (n.phone_number || "").replace(/\D/g, "").includes(q)) : filtered;
+    if (!orderedUnpaidIds) return searched;
+    const map = new Map(searched.map((a) => [a.id, a]));
     return orderedUnpaidIds.map((id) => map.get(id)).filter(Boolean);
   })();
 
   const displayExpiry = (() => {
-    if (!orderedExpiryIds) return expiryDates as any[];
-    const map = new Map((expiryDates as any[]).map((a) => [a.id, a]));
+    const q = searchQuery.replace(/\D/g, "");
+    const base = q
+      ? (expiryDates as any[]).filter((n: any) => (n.phone_number || "").replace(/\D/g, "").includes(q))
+      : (expiryDates as any[]);
+    if (!orderedExpiryIds) return base;
+    const map = new Map(base.map((a) => [a.id, a]));
     return orderedExpiryIds.map((id) => map.get(id)).filter(Boolean);
   })();
 
