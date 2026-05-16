@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type CapcutAccount = { id: string; username: string; password_or_code: string; plan_type: string; status: string; delivered_count: number; category_id: string | null };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; delivery_limit?: number };
 
 const ACCOUNT_STATUS_CONFIG = {
   "متاح": { label: "شغال", dot: "bg-success", text: "text-success" },
