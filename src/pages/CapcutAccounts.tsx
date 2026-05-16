@@ -514,28 +514,6 @@ export default function CapcutAccounts() {
           >
             {selectionMode ? "إلغاء" : "تحديد"}
           </button>
-          <div className="flex items-center rounded-lg border border-border p-0.5 shrink-0">
-            <button
-              onClick={() => setViewMode("table")}
-              title="عرض جدول"
-              className={cn(
-                "flex items-center justify-center h-6 w-7 rounded-md transition-all",
-                viewMode === "table" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Rows3 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode("cards")}
-              title="عرض بطاقات"
-              className={cn(
-                "flex items-center justify-center h-6 w-7 rounded-md transition-all",
-                viewMode === "cards" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-          </div>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setBulkDeleteOpen(true)}
