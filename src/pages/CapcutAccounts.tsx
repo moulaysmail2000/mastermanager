@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type CapcutAccount = { id: string; username: string; password_or_code: string; plan_type: string; status: string; delivered_count: number; category_id: string | null };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; delivery_limit?: number };
 
 const ACCOUNT_STATUS_CONFIG = {
   "متاح": { label: "شغال", dot: "bg-success", text: "text-success" },
@@ -131,7 +131,13 @@ export default function CapcutAccounts() {
   const sharedPassword = settings?.shared_password || "";
   const messageTemplate = settings?.message_template || DEFAULT_MESSAGE;
   const tripleMode = settings?.triple_delivery === "1";
-  const deliveryLimit = tripleMode ? 3 : 2;
+  const defaultDeliveryLimit = tripleMode ? 3 : 2;
+  const getLimitForCategory = (categoryId: string | null) => {
+    if (!categoryId) return defaultDeliveryLimit;
+    const cat = categories.find((c) => c.id === categoryId);
+    return (cat?.delivery_limit as number | undefined) ?? defaultDeliveryLimit;
+  };
+  const getLimitForAccount = (acc: { category_id: string | null }) => getLimitForCategory(acc.category_id);
 
   const saveSettingMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
@@ -181,6 +187,18 @@ export default function CapcutAccounts() {
       setEditCategoryId(null);
       setEditCategoryName("");
       toast.success("تم تعديل اسم التصنيف");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const setCategoryLimitMutation = useMutation({
+    mutationFn: async ({ id, limit }: { id: string; limit: number }) => {
+      const { error } = await supabase.from("account_categories").update({ delivery_limit: limit } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["account_categories"] });
+      toast.success("تم تحديث عدد التسليمات");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -375,16 +393,18 @@ export default function CapcutAccounts() {
       ? messageTemplate.replace("{email}", account.username).replace("{password}", account.password_or_code)
       : `${account.username}\n${account.password_or_code}`;
     await copy(textToCopy);
+    const limit = getLimitForAccount(account);
     const newCount = (account.delivered_count || 0) + 1;
-    const newStatus = newCount >= deliveryLimit ? "مباع" : "متاح";
+    const newStatus = newCount >= limit ? "مباع" : "متاح";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
-    toast.success(`تم النسخ (${newCount}/${deliveryLimit})`);
+    toast.success(`تم النسخ (${newCount}/${limit})`);
   };
 
   const handleUndoDeliver = async (account: CapcutAccount) => {
+    const limit = getLimitForAccount(account);
     const newCount = Math.max(0, (account.delivered_count || 0) - 1);
-    const newStatus = newCount < deliveryLimit ? "متاح" : "مباع";
+    const newStatus = newCount < limit ? "متاح" : "مباع";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
     toast.success("تم التراجع");
@@ -404,10 +424,10 @@ export default function CapcutAccounts() {
     return matchesCategory && matchesStatus;
   }).sort((a, b) => {
     // In-progress (1..limit-1) first, then untouched (0), then completed (>=limit) last
-    const priority = (count: number) =>
-      count > 0 && count < deliveryLimit ? 0 : count === 0 ? 1 : 2;
-    const pa = priority(a.delivered_count);
-    const pb = priority(b.delivered_count);
+    const priority = (count: number, limit: number) =>
+      count > 0 && count < limit ? 0 : count === 0 ? 1 : 2;
+    const pa = priority(a.delivered_count, getLimitForAccount(a));
+    const pb = priority(b.delivered_count, getLimitForAccount(b));
     if (pa !== pb) return pa - pb;
     // Within completed (priority 2), most recently sold appears first
     if (pa === 2) {
@@ -616,6 +636,31 @@ export default function CapcutAccounts() {
                     <PopoverContent align="end" className="w-44 p-1.5" dir="rtl">
                       <div className="flex flex-col gap-0.5">
                         <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground tracking-wide">{cat.name}</div>
+                        <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold text-muted-foreground/80">عدد التسليمات لكل حساب</div>
+                        <div className="flex items-center gap-1 px-1.5 pb-1.5">
+                          {[1, 2, 3].map((n) => {
+                            const currentLimit = (cat.delivery_limit as number | undefined) ?? 2;
+                            const isSelected = currentLimit === n;
+                            return (
+                              <button
+                                key={n}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isSelected) setCategoryLimitMutation.mutate({ id: cat.id, limit: n });
+                                }}
+                                className={cn(
+                                  "flex-1 px-2 py-1 rounded-md text-[11px] font-bold tabular-nums transition-all border",
+                                  isSelected
+                                    ? "bg-success text-success-foreground border-success shadow-sm"
+                                    : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                x{n}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="h-px bg-border/60 my-0.5" />
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditCategoryId(cat.id); setEditCategoryName(cat.name); }}
                           className="flex flex-row-reverse items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium hover:bg-muted text-foreground"
@@ -685,6 +730,7 @@ export default function CapcutAccounts() {
                       const count = a.delivered_count || 0;
                       const isSold = a.status === "مباع";
                       const isNotWorking = a.status === "لايشتغل";
+                      const rowLimit = getLimitForAccount(a);
                       return (
                         <TableRow key={a.id} className={cn(
                           "transition-colors",
@@ -723,8 +769,10 @@ export default function CapcutAccounts() {
                                 </Button>
                               )}
                               <UserCheck className={`h-3.5 w-3.5 ${count >= 1 ? "text-primary" : "text-muted-foreground/20"}`} />
-                              <UserCheck className={`h-3.5 w-3.5 ${count >= 2 ? "text-primary" : "text-muted-foreground/20"}`} />
-                              {tripleMode && (
+                              {rowLimit >= 2 && (
+                                <UserCheck className={`h-3.5 w-3.5 ${count >= 2 ? "text-primary" : "text-muted-foreground/20"}`} />
+                              )}
+                              {rowLimit >= 3 && (
                                 <UserCheck className={`h-3.5 w-3.5 ${count >= 3 ? "text-primary" : "text-muted-foreground/20"}`} />
                               )}
                             </div>
