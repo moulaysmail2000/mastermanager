@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -120,6 +120,9 @@ export default function UnpaidNumbers() {
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
