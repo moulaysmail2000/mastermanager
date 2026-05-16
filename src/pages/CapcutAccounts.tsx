@@ -544,37 +544,6 @@ export default function CapcutAccounts() {
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedIds(new Set()); setSelectionMode(false); }}>
         <div className="relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-muted/20 p-2.5 shadow-sm">
           <div className="flex flex-row-reverse items-center gap-2">
-            {/* 2x / 3x segmented toggle */}
-            <div
-              className="flex flex-row-reverse shrink-0 items-center rounded-full border border-border/70 bg-background/60 p-0.5 backdrop-blur-sm"
-              title="عدد مرات تسليم الحساب"
-            >
-              <button
-                onClick={() => { if (tripleMode) saveSettingMutation.mutate({ key: "triple_delivery", value: "0" }); }}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all",
-                  !tripleMode
-                    ? "bg-success text-success-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Repeat className="h-2.5 w-2.5" /> 2x
-              </button>
-              <button
-                onClick={() => { if (!tripleMode) saveSettingMutation.mutate({ key: "triple_delivery", value: "1" }); }}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all",
-                  tripleMode
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Repeat className="h-2.5 w-2.5" /> 3x
-              </button>
-            </div>
-
-            <div className="h-6 w-px bg-border/60 shrink-0" />
-
             <div className="flex-1 overflow-x-auto scrollbar-hide">
               <TabsList className="inline-flex flex-row-reverse h-auto gap-1.5 bg-transparent p-0">
             {uncategorizedCount > 0 && (
