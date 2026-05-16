@@ -247,7 +247,7 @@ export default function CapcutAccounts() {
         const blocks = text.split(/\n\s*-{3,}\s*\n|\r?\n\r?\n/);
         const parseBlock = (block: string) => {
           const emailMatch = block.match(/Account\s*[:：]\s*([^\s\r\n]+)/i) || block.match(EMAIL_RE);
-          const pwdMatch = block.match(/Password\s*[:：]\s*([^\s\r\n]+)/i);
+          const pwdMatch = block.match(/(?:Password|Remark|Pass|PWD)\s*[:：]\s*([^\s\r\n]+)/i);
           if (!emailMatch || !pwdMatch) return;
           const rawEmail = emailMatch[1] || emailMatch[0];
           const m = rawEmail.match(EMAIL_RE);
@@ -320,8 +320,32 @@ export default function CapcutAccounts() {
     if (!activeTab) { toast.error("يرجى اختيار تصنيف أولاً"); return; }
     try {
       const text = await navigator.clipboard.readText();
-      const email = text.trim();
-      if (!email) { toast.error("الحافظة فارغة"); return; }
+      const raw = text.trim();
+      if (!raw) { toast.error("الحافظة فارغة"); return; }
+      // Detect WhatsApp / multi-account format (Account: ... Remark/Password: ...)
+      if (/Account\s*[:：]/i.test(raw)) {
+        const blocks = raw.split(/\n\s*-{3,}\s*\n|\r?\n\r?\n/);
+        const seen = new Set<string>();
+        const rows: { email: string; password: string; selected: boolean }[] = [];
+        blocks.forEach((block) => {
+          const emailMatch = block.match(/Account\s*[:：]\s*([^\s\r\n]+)/i) || block.match(EMAIL_RE);
+          const pwdMatch = block.match(/(?:Password|Remark|Pass|PWD)\s*[:：]\s*([^\s\r\n]+)/i);
+          if (!emailMatch) return;
+          const rawEmail = (emailMatch[1] || emailMatch[0]).trim();
+          const m = rawEmail.match(EMAIL_RE);
+          const email = m ? m[0] : rawEmail;
+          const password = pwdMatch ? pwdMatch[1].trim() : (samePassword ? sharedPassword : "");
+          if (!email || !password) return;
+          if (seen.has(email.toLowerCase())) return;
+          seen.add(email.toLowerCase());
+          rows.push({ email, password, selected: true });
+        });
+        if (!rows.length) { toast.error("لم يتم العثور على حسابات صالحة"); return; }
+        setImportRows(rows);
+        setImportDialogOpen(true);
+        return;
+      }
+      const email = raw;
       if (samePassword) { insertMutation.mutate({ email, password: sharedPassword }); }
       else { setPendingEmail(email); setPerEmailPassword(""); setPerEmailPasswordOpen(true); }
     } catch { toast.error("لا يمكن الوصول إلى الحافظة"); }
