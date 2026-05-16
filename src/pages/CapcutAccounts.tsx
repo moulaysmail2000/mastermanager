@@ -393,16 +393,18 @@ export default function CapcutAccounts() {
       ? messageTemplate.replace("{email}", account.username).replace("{password}", account.password_or_code)
       : `${account.username}\n${account.password_or_code}`;
     await copy(textToCopy);
+    const limit = getLimitForAccount(account);
     const newCount = (account.delivered_count || 0) + 1;
-    const newStatus = newCount >= deliveryLimit ? "مباع" : "متاح";
+    const newStatus = newCount >= limit ? "مباع" : "متاح";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
-    toast.success(`تم النسخ (${newCount}/${deliveryLimit})`);
+    toast.success(`تم النسخ (${newCount}/${limit})`);
   };
 
   const handleUndoDeliver = async (account: CapcutAccount) => {
+    const limit = getLimitForAccount(account);
     const newCount = Math.max(0, (account.delivered_count || 0) - 1);
-    const newStatus = newCount < deliveryLimit ? "متاح" : "مباع";
+    const newStatus = newCount < limit ? "متاح" : "مباع";
     await supabase.from("capcut_accounts").update({ delivered_count: newCount, status: newStatus, updated_at: new Date().toISOString() }).eq("id", account.id);
     queryClient.invalidateQueries({ queryKey: ["capcut_accounts"] });
     toast.success("تم التراجع");
@@ -422,10 +424,10 @@ export default function CapcutAccounts() {
     return matchesCategory && matchesStatus;
   }).sort((a, b) => {
     // In-progress (1..limit-1) first, then untouched (0), then completed (>=limit) last
-    const priority = (count: number) =>
-      count > 0 && count < deliveryLimit ? 0 : count === 0 ? 1 : 2;
-    const pa = priority(a.delivered_count);
-    const pb = priority(b.delivered_count);
+    const priority = (count: number, limit: number) =>
+      count > 0 && count < limit ? 0 : count === 0 ? 1 : 2;
+    const pa = priority(a.delivered_count, getLimitForAccount(a));
+    const pb = priority(b.delivered_count, getLimitForAccount(b));
     if (pa !== pb) return pa - pb;
     // Within completed (priority 2), most recently sold appears first
     if (pa === 2) {
