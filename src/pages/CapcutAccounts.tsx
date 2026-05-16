@@ -475,18 +475,6 @@ export default function CapcutAccounts() {
             <FileText className="h-3 w-3" /> رسالة التسليم
           </button>
           <button
-            onClick={() => saveSettingMutation.mutate({ key: "triple_delivery", value: tripleMode ? "0" : "1" })}
-            title={tripleMode ? "تسليم 3 مرات (مفعل)" : "تسليم مرتين (افتراضي)"}
-            className={cn(
-              "flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0",
-              tripleMode
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"
-            )}
-          >
-            <Repeat className="h-3 w-3" /> {tripleMode ? "3 مرات" : "مرتين"}
-          </button>
-          <button
             onClick={() => { setSelectionMode((m) => !m); setSelectedIds(new Set()); }}
             className={cn(
               "flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0",
