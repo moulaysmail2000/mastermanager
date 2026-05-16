@@ -820,8 +820,8 @@ export default function CapcutAccounts() {
                           <Checkbox checked={selectionMode && allSelected} onCheckedChange={toggleSelectAll} />
                         </TableHead>
                       )}
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">الإيميل</TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">كلمة السر</TableHead>
+                      <TableHead className="text-left text-xs font-semibold text-muted-foreground">الإيميل</TableHead>
+                      <TableHead className="text-left text-xs font-semibold text-muted-foreground">كلمة السر</TableHead>
                       <TableHead className="w-[70px] text-center text-xs font-semibold text-muted-foreground">الحالة</TableHead>
                       <TableHead className="w-[90px] text-center text-xs font-semibold text-muted-foreground">تسليم</TableHead>
                     </TableRow>
