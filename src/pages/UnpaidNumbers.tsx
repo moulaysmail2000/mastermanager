@@ -432,6 +432,37 @@ export default function UnpaidNumbers() {
           </div>
         </div>
 
+        {searchOpen && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                autoFocus
+                placeholder="ابحث عن رقم في كل التبويبات..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                dir="ltr"
+                className="h-9 text-sm pr-8"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  title="مسح"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <span className="text-[11px] text-muted-foreground shrink-0">
+                تصنيف: {displayUnpaid.length} · انتهاء: {displayExpiry.length}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* ===== Classification Tab ===== */}
         <TabsContent value="classification" className="space-y-4">
           <div className="flex flex-wrap gap-2">
