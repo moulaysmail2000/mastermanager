@@ -402,12 +402,13 @@ export default function CapcutAccounts() {
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     return matchesCategory && matchesStatus;
   }).sort((a, b) => {
-    // delivered_count === 1 first (needs 2nd delivery), then 0 (unused), then 2+ (sold) last
-    const priority = (count: number) => count === 1 ? 0 : count === 0 ? 1 : 2;
+    // In-progress (1..limit-1) first, then untouched (0), then completed (>=limit) last
+    const priority = (count: number) =>
+      count > 0 && count < deliveryLimit ? 0 : count === 0 ? 1 : 2;
     const pa = priority(a.delivered_count);
     const pb = priority(b.delivered_count);
     if (pa !== pb) return pa - pb;
-    // Within sold (priority 2), most recently sold appears first (top of expired section)
+    // Within completed (priority 2), most recently sold appears first
     if (pa === 2) {
       const ua = new Date((a as any).updated_at || 0).getTime();
       const ub = new Date((b as any).updated_at || 0).getTime();
