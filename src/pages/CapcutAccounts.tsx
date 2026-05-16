@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat, ChevronDown } from "lucide-react";
+import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat, ChevronDown, LayoutGrid, Rows3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
