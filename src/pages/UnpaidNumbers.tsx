@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -120,6 +120,9 @@ export default function UnpaidNumbers() {
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Camera OCR state
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -308,14 +311,20 @@ export default function UnpaidNumbers() {
 
   const displayUnpaid = (() => {
     const filtered = (numbers as any[]).filter(n => filterStatus === "all" || n.status === filterStatus);
-    if (!orderedUnpaidIds) return filtered;
-    const map = new Map(filtered.map((a) => [a.id, a]));
+    const q = searchQuery.replace(/\D/g, "");
+    const searched = q ? filtered.filter((n: any) => (n.phone_number || "").replace(/\D/g, "").includes(q)) : filtered;
+    if (!orderedUnpaidIds) return searched;
+    const map = new Map(searched.map((a) => [a.id, a]));
     return orderedUnpaidIds.map((id) => map.get(id)).filter(Boolean);
   })();
 
   const displayExpiry = (() => {
-    if (!orderedExpiryIds) return expiryDates as any[];
-    const map = new Map((expiryDates as any[]).map((a) => [a.id, a]));
+    const q = searchQuery.replace(/\D/g, "");
+    const base = q
+      ? (expiryDates as any[]).filter((n: any) => (n.phone_number || "").replace(/\D/g, "").includes(q))
+      : (expiryDates as any[]);
+    if (!orderedExpiryIds) return base;
+    const map = new Map(base.map((a) => [a.id, a]));
     return orderedExpiryIds.map((id) => map.get(id)).filter(Boolean);
   })();
 
@@ -361,6 +370,20 @@ export default function UnpaidNumbers() {
             </SortableContext>
           </DndContext>
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={searchOpen ? "default" : "outline"}
+              className="gap-1.5"
+              title="بحث عن رقم"
+              onClick={() => {
+                setSearchOpen((v) => {
+                  if (v) setSearchQuery("");
+                  return !v;
+                });
+              }}
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Button>
             <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => setReorderMode(v => !v)} className="gap-1.5">
               <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب التبويبات"}
             </Button>
@@ -408,6 +431,37 @@ export default function UnpaidNumbers() {
             )}
           </div>
         </div>
+
+        {searchOpen && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                autoFocus
+                placeholder="ابحث عن رقم في كل التبويبات..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                dir="ltr"
+                className="h-9 text-sm pr-8"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  title="مسح"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <span className="text-[11px] text-muted-foreground shrink-0">
+                تصنيف: {displayUnpaid.length} · انتهاء: {displayExpiry.length}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* ===== Classification Tab ===== */}
         <TabsContent value="classification" className="space-y-4">
