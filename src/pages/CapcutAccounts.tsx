@@ -636,6 +636,31 @@ export default function CapcutAccounts() {
                     <PopoverContent align="end" className="w-44 p-1.5" dir="rtl">
                       <div className="flex flex-col gap-0.5">
                         <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground tracking-wide">{cat.name}</div>
+                        <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold text-muted-foreground/80">عدد التسليمات لكل حساب</div>
+                        <div className="flex items-center gap-1 px-1.5 pb-1.5">
+                          {[1, 2, 3].map((n) => {
+                            const currentLimit = (cat.delivery_limit as number | undefined) ?? 2;
+                            const isSelected = currentLimit === n;
+                            return (
+                              <button
+                                key={n}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isSelected) setCategoryLimitMutation.mutate({ id: cat.id, limit: n });
+                                }}
+                                className={cn(
+                                  "flex-1 px-2 py-1 rounded-md text-[11px] font-bold tabular-nums transition-all border",
+                                  isSelected
+                                    ? "bg-success text-success-foreground border-success shadow-sm"
+                                    : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                x{n}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="h-px bg-border/60 my-0.5" />
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditCategoryId(cat.id); setEditCategoryName(cat.name); }}
                           className="flex flex-row-reverse items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium hover:bg-muted text-foreground"
