@@ -705,6 +705,7 @@ export default function CapcutAccounts() {
                       const count = a.delivered_count || 0;
                       const isSold = a.status === "مباع";
                       const isNotWorking = a.status === "لايشتغل";
+                      const rowLimit = getLimitForAccount(a);
                       return (
                         <TableRow key={a.id} className={cn(
                           "transition-colors",
@@ -743,8 +744,10 @@ export default function CapcutAccounts() {
                                 </Button>
                               )}
                               <UserCheck className={`h-3.5 w-3.5 ${count >= 1 ? "text-primary" : "text-muted-foreground/20"}`} />
-                              <UserCheck className={`h-3.5 w-3.5 ${count >= 2 ? "text-primary" : "text-muted-foreground/20"}`} />
-                              {tripleMode && (
+                              {rowLimit >= 2 && (
+                                <UserCheck className={`h-3.5 w-3.5 ${count >= 2 ? "text-primary" : "text-muted-foreground/20"}`} />
+                              )}
+                              {rowLimit >= 3 && (
                                 <UserCheck className={`h-3.5 w-3.5 ${count >= 3 ? "text-primary" : "text-muted-foreground/20"}`} />
                               )}
                             </div>
