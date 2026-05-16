@@ -14,7 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat } from "lucide-react";
+import { ClipboardPaste, Trash2, Save, Search, Settings2, Send, UserCheck, Pencil, Plus, X, Lock, LockOpen, MessageSquare, FileText, MonitorSmartphone, Undo2, Upload, Repeat, ChevronDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -602,12 +603,39 @@ export default function CapcutAccounts() {
                       {count}
                     </span>
                   </span>
-                  <div className={cn("flex items-center gap-0.5 -mr-1 transition-all", "opacity-0 max-w-0 group-hover/tab:opacity-100 group-hover/tab:max-w-[40px]")}>
-                    <button onClick={(e) => { e.stopPropagation(); setEditCategoryId(cat.id); setEditCategoryName(cat.name); }}
-                      className={cn("p-0.5 rounded-full", isActive ? "hover:bg-primary-foreground/20" : "hover:bg-muted")}><Pencil className="h-2.5 w-2.5" /></button>
-                    <button onClick={(e) => { e.stopPropagation(); setDeleteCategoryId(cat.id); }}
-                      className={cn("p-0.5 rounded-full", isActive ? "hover:bg-destructive/40" : "hover:bg-destructive/20")}><X className="h-2.5 w-2.5" /></button>
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <span
+                        role="button"
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          "inline-flex items-center justify-center h-5 w-5 -mr-1 rounded-full cursor-pointer transition-colors",
+                          isActive ? "hover:bg-primary-foreground/20 text-primary-foreground/80" : "hover:bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </span>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-44 p-1.5" dir="rtl">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground tracking-wide">{cat.name}</div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditCategoryId(cat.id); setEditCategoryName(cat.name); }}
+                          className="flex flex-row-reverse items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium hover:bg-muted text-foreground"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          <span>إعادة تسمية</span>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteCategoryId(cat.id); }}
+                          className="flex flex-row-reverse items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium hover:bg-destructive/15 text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>حذف التصنيف</span>
+                        </button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </TabsTrigger>
               );
             })}
