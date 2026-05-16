@@ -561,18 +561,17 @@ export default function CapcutAccounts() {
               <TabsTrigger
                 value={UNCAT}
                 className={cn(
-                  "group/tab relative text-[11px] font-semibold tracking-tight px-3.5 py-1.5 rounded-full flex flex-row-reverse items-center gap-2 transition-all duration-200",
+                  "relative text-xs font-medium px-3 py-1.5 rounded-full border-2 flex flex-row-reverse items-center gap-2 transition-all",
                   activeTab === UNCAT
-                    ? "bg-gradient-to-b from-warning to-warning/85 text-warning-foreground shadow-[0_4px_14px_-4px_hsl(var(--warning)/0.55),inset_0_1px_0_hsl(0_0%_100%/0.25)] ring-1 ring-warning/40"
-                    : "bg-card/70 text-muted-foreground ring-1 ring-border/60 hover:ring-warning/50 hover:text-foreground hover:bg-card"
+                    ? "bg-card text-foreground border-warning shadow-[0_0_0_3px_hsl(var(--warning)/0.15)]"
+                    : "bg-card text-muted-foreground border-warning/30 hover:border-warning/60 hover:text-foreground"
                 )}
               >
-                <span className="flex flex-row-reverse items-center gap-2">
-                  <span className={cn("h-1.5 w-1.5 rounded-full", activeTab === UNCAT ? "bg-warning-foreground/90" : "bg-warning/70")} />
+                <span className="flex items-center gap-2">
                   <span>بدون تصنيف</span>
                   <span className={cn(
-                    "inline-flex items-center justify-center min-w-[1.25rem] h-[18px] px-1.5 rounded-full text-[10px] font-bold tabular-nums",
-                    activeTab === UNCAT ? "bg-warning-foreground/20 text-warning-foreground" : "bg-muted text-muted-foreground"
+                    "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums",
+                    activeTab === UNCAT ? "bg-warning/20 text-warning" : "bg-muted/60 text-muted-foreground"
                   )}>
                     {uncategorizedCount}
                   </span>
@@ -587,18 +586,17 @@ export default function CapcutAccounts() {
                   key={cat.id}
                   value={cat.id}
                   className={cn(
-                    "group/tab relative text-[11px] font-semibold tracking-tight px-3.5 py-1.5 rounded-full flex flex-row-reverse items-center gap-2 transition-all duration-200",
+                    "relative text-xs font-medium px-3 py-1.5 rounded-full border-2 flex flex-row-reverse items-center gap-2 transition-all",
                     isActive
-                      ? "bg-gradient-to-b from-primary to-primary/85 text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55),inset_0_1px_0_hsl(0_0%_100%/0.25)] ring-1 ring-primary/40"
-                      : "bg-card/70 text-muted-foreground ring-1 ring-border/60 hover:ring-primary/40 hover:text-foreground hover:bg-card"
+                      ? "bg-card text-foreground border-success shadow-[0_0_0_3px_hsl(var(--success)/0.15)]"
+                      : "bg-card text-muted-foreground border-border/60 hover:border-success/50 hover:text-foreground"
                   )}
                 >
-                  <span className="flex flex-row-reverse items-center gap-2">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-primary-foreground/90" : "bg-success/70")} />
+                  <span className="flex items-center gap-2">
                     <span>{cat.name}</span>
                     <span className={cn(
-                      "inline-flex items-center justify-center min-w-[1.25rem] h-[18px] px-1.5 rounded-full text-[10px] font-bold tabular-nums",
-                      isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                      "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums",
+                      isActive ? "bg-muted text-foreground" : "bg-muted/60 text-muted-foreground"
                     )}>
                       {count}
                     </span>
@@ -609,8 +607,7 @@ export default function CapcutAccounts() {
                         role="button"
                         onClick={(e) => e.stopPropagation()}
                         className={cn(
-                          "inline-flex items-center justify-center h-5 w-5 -mr-1 rounded-full cursor-pointer transition-colors",
-                          isActive ? "hover:bg-primary-foreground/20 text-primary-foreground/80" : "hover:bg-muted text-muted-foreground"
+                          "inline-flex items-center justify-center h-5 w-5 rounded-full cursor-pointer transition-colors hover:bg-muted text-muted-foreground"
                         )}
                       >
                         <ChevronDown className="h-3 w-3" />
