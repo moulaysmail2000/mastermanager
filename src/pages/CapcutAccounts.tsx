@@ -131,7 +131,13 @@ export default function CapcutAccounts() {
   const sharedPassword = settings?.shared_password || "";
   const messageTemplate = settings?.message_template || DEFAULT_MESSAGE;
   const tripleMode = settings?.triple_delivery === "1";
-  const deliveryLimit = tripleMode ? 3 : 2;
+  const defaultDeliveryLimit = tripleMode ? 3 : 2;
+  const getLimitForCategory = (categoryId: string | null) => {
+    if (!categoryId) return defaultDeliveryLimit;
+    const cat = categories.find((c) => c.id === categoryId);
+    return (cat?.delivery_limit as number | undefined) ?? defaultDeliveryLimit;
+  };
+  const getLimitForAccount = (acc: { category_id: string | null }) => getLimitForCategory(acc.category_id);
 
   const saveSettingMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
