@@ -551,6 +551,37 @@ export default function CapcutAccounts() {
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedIds(new Set()); setSelectionMode(false); }}>
         <div className="relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-muted/20 p-2.5 shadow-sm">
           <div className="flex flex-row-reverse items-center gap-2">
+            {/* View mode toggle (table / cards) */}
+            <div
+              className="flex flex-row-reverse shrink-0 items-center rounded-full border border-border/70 bg-background/60 p-0.5 backdrop-blur-sm"
+              title="طريقة العرض"
+            >
+              <button
+                onClick={() => setViewMode("table")}
+                className={cn(
+                  "flex items-center justify-center h-6 w-7 rounded-full transition-all",
+                  viewMode === "table"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Rows3 className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => setViewMode("cards")}
+                className={cn(
+                  "flex items-center justify-center h-6 w-7 rounded-full transition-all",
+                  viewMode === "cards"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutGrid className="h-3 w-3" />
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-border/60 shrink-0" />
+
             <div className="flex-1 overflow-x-auto scrollbar-hide">
               <TabsList className="inline-flex flex-row-reverse h-auto gap-1.5 bg-transparent p-0">
             {uncategorizedCount > 0 && (
