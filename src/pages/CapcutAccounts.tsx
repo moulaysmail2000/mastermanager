@@ -185,6 +185,18 @@ export default function CapcutAccounts() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const setCategoryLimitMutation = useMutation({
+    mutationFn: async ({ id, limit }: { id: string; limit: number }) => {
+      const { error } = await supabase.from("account_categories").update({ delivery_limit: limit } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["account_categories"] });
+      toast.success("تم تحديث عدد التسليمات");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
