@@ -370,6 +370,20 @@ export default function UnpaidNumbers() {
             </SortableContext>
           </DndContext>
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={searchOpen ? "default" : "outline"}
+              className="gap-1.5"
+              title="بحث عن رقم"
+              onClick={() => {
+                setSearchOpen((v) => {
+                  if (v) setSearchQuery("");
+                  return !v;
+                });
+              }}
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Button>
             <Button size="sm" variant={reorderMode ? "default" : "outline"} onClick={() => setReorderMode(v => !v)} className="gap-1.5">
               <Move className="h-3.5 w-3.5" /> {reorderMode ? "إنهاء" : "ترتيب التبويبات"}
             </Button>
