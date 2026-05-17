@@ -242,6 +242,29 @@ export default function FriendAccounts() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateAccount = useMutation({
+    mutationFn: async () => {
+      if (!editAcc) return;
+      if (!editForm.owner_name.trim() || !editForm.bank_name.trim())
+        throw new Error("املأ الحقول المطلوبة");
+      const { error } = await supabase
+        .from("friend_accounts")
+        .update({
+          owner_name: editForm.owner_name.trim(),
+          bank_name: editForm.bank_name.trim(),
+          notes: editForm.notes.trim() || null,
+        })
+        .eq("id", editAcc.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["friend_accounts"] });
+      setEditAcc(null);
+      toast.success("تم تحديث البطاقة");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const accName = (id: string) => accounts.find((a) => a.id === id)?.owner_name ?? "—";
 
   // Aggregated totals across all accounts
