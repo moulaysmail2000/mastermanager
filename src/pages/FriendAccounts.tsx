@@ -389,8 +389,11 @@ export default function FriendAccounts() {
                 {/* Top row: bank + delete */}
                 <div className="relative flex items-start justify-between gap-2">
                   <div>
-                    <p className={`text-[8px] uppercase tracking-[0.32em] ${subtle} font-semibold font-display`}>
-                      Wallet
+                    <p
+                      className={`text-[16px] font-extrabold tracking-tight font-arabic leading-tight ${isLight ? "text-slate-900" : "text-white"}`}
+                      dir="rtl"
+                    >
+                      {a.owner_name}
                     </p>
                     <p className="text-[15px] font-bold mt-0.5 tracking-tight font-display" style={{ color: accentColor }}>
                       {a.bank_name}
