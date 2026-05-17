@@ -134,6 +134,7 @@ export default function FriendAccounts() {
   const [editForm, setEditForm] = useState({ owner_name: "", bank_name: "", notes: "" });
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Per-card theme overrides + global default
   const [globalTheme, setGlobalTheme] = useState<string>(() => {
@@ -237,6 +238,7 @@ export default function FriendAccounts() {
       qc.invalidateQueries({ queryKey: ["friend_accounts"] });
       qc.invalidateQueries({ queryKey: ["friend_transactions"] });
       setDeleteId(null);
+      setDeleteConfirmText("");
       toast.success("تم حذف الحساب");
     },
     onError: (e: any) => toast.error(e.message),
