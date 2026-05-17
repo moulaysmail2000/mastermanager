@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi } from "lucide-react";
+import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 type FriendAccount = {
@@ -33,6 +34,89 @@ type FriendTx = {
 const fmt = (n: number) =>
   new Intl.NumberFormat("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + " DH";
 
+/* ───── Card Theme System ───── */
+type CardTheme = {
+  id: string;
+  name: string;
+  swatch: string;
+  /** When statusAware = true, the accent flips green/red/slate based on net. */
+  statusAware?: boolean;
+  bg: string; // gradient css value
+  accent: string; // hex
+  chip: string; // tailwind classes for the chip
+};
+
+const CARD_THEMES: CardTheme[] = [
+  {
+    id: "noir",
+    name: "Noir Status",
+    swatch: "linear-gradient(135deg,#064e3b,#0f172a,#3f0a18)",
+    statusAware: true,
+    bg: "", // computed per card
+    accent: "",
+    chip: "from-yellow-200 via-yellow-400 to-yellow-600",
+  },
+  {
+    id: "royal",
+    name: "Royal Gold",
+    swatch: "linear-gradient(135deg,#1a0033,#3b0764,#000)",
+    bg: "linear-gradient(135deg,#1a0033 0%,#2e0a4f 55%,#000000 100%)",
+    accent: "#fbbf24",
+    chip: "from-yellow-200 via-yellow-400 to-yellow-700",
+  },
+  {
+    id: "ocean",
+    name: "Deep Ocean",
+    swatch: "linear-gradient(135deg,#082f49,#0c4a6e,#000)",
+    bg: "linear-gradient(135deg,#082f49 0%,#0c4a6e 55%,#020617 100%)",
+    accent: "#38bdf8",
+    chip: "from-slate-200 via-slate-400 to-slate-600",
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    swatch: "linear-gradient(135deg,#7c2d12,#9f1239,#000)",
+    bg: "linear-gradient(135deg,#7c2d12 0%,#9f1239 55%,#0a0a0a 100%)",
+    accent: "#fdba74",
+    chip: "from-orange-200 via-orange-400 to-amber-600",
+  },
+  {
+    id: "forest",
+    name: "Forest",
+    swatch: "linear-gradient(135deg,#022c22,#064e3b,#000)",
+    bg: "linear-gradient(135deg,#022c22 0%,#064e3b 55%,#0a0a0a 100%)",
+    accent: "#6ee7b7",
+    chip: "from-emerald-200 via-emerald-400 to-emerald-700",
+  },
+  {
+    id: "platinum",
+    name: "Platinum",
+    swatch: "linear-gradient(135deg,#f1f5f9,#cbd5e1,#94a3b8)",
+    bg: "linear-gradient(135deg,#f8fafc 0%,#e2e8f0 55%,#cbd5e1 100%)",
+    accent: "#0f172a",
+    chip: "from-slate-300 via-slate-400 to-slate-600",
+  },
+  {
+    id: "cosmic",
+    name: "Cosmic",
+    swatch: "linear-gradient(135deg,#312e81,#7c3aed,#db2777)",
+    bg: "linear-gradient(135deg,#1e1b4b 0%,#4c1d95 50%,#831843 100%)",
+    accent: "#f0abfc",
+    chip: "from-fuchsia-200 via-fuchsia-400 to-purple-600",
+  },
+  {
+    id: "carbon",
+    name: "Carbon",
+    swatch: "linear-gradient(135deg,#18181b,#27272a,#000)",
+    bg: "linear-gradient(135deg,#18181b 0%,#0a0a0a 55%,#000000 100%)",
+    accent: "#e4e4e7",
+    chip: "from-zinc-300 via-zinc-500 to-zinc-700",
+  },
+];
+
+const THEME_STORE_KEY = "wallet_card_themes_v1";
+const GLOBAL_THEME_KEY = "wallet_global_theme_v1";
+
 export default function FriendAccounts() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -45,6 +129,22 @@ export default function FriendAccounts() {
   const [note, setNote] = useState("");
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Per-card theme overrides + global default
+  const [globalTheme, setGlobalTheme] = useState<string>(() => {
+    if (typeof window === "undefined") return "noir";
+    return localStorage.getItem(GLOBAL_THEME_KEY) || "noir";
+  });
+  const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(THEME_STORE_KEY) || "{}"); } catch { return {}; }
+  });
+  useEffect(() => { localStorage.setItem(GLOBAL_THEME_KEY, globalTheme); }, [globalTheme]);
+  useEffect(() => { localStorage.setItem(THEME_STORE_KEY, JSON.stringify(cardThemes)); }, [cardThemes]);
+  const setCardTheme = (id: string, themeId: string) =>
+    setCardThemes((p) => ({ ...p, [id]: themeId }));
+  const getTheme = (id: string): CardTheme =>
+    CARD_THEMES.find((t) => t.id === (cardThemes[id] || globalTheme)) || CARD_THEMES[0];
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ["friend_accounts"],
@@ -139,17 +239,84 @@ export default function FriendAccounts() {
 
   const accName = (id: string) => accounts.find((a) => a.id === id)?.owner_name ?? "—";
 
+  // Aggregated totals across all accounts
+  const grand = accounts.reduce(
+    (acc, a) => {
+      const accTxs = txs.filter((t) => t.account_id === a.id);
+      const sent = accTxs.filter((t) => t.type === "deposit").reduce((s, t) => s + Number(t.amount), 0);
+      const recv = accTxs.filter((t) => t.type === "withdraw").reduce((s, t) => s + Number(t.amount), 0);
+      const n = sent - recv;
+      if (n > 0) acc.owedToMe += n;
+      else if (n < 0) acc.iOwe += Math.abs(n);
+      return acc;
+    },
+    { owedToMe: 0, iOwe: 0 },
+  );
+  const netAll = grand.owedToMe - grand.iOwe;
+
   return (
     <div className="space-y-5" dir="rtl">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-bold text-foreground">حسابات الأصدقاء</h1>
-          
+          <p className="text-[11px] text-muted-foreground mt-0.5">إدارة الأرصدة والديون مع الأصدقاء</p>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-          <UserPlus className="h-3.5 w-3.5" /> إضافة حساب
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 h-8" title="ثيم البطاقات">
+                <Palette className="h-3.5 w-3.5" />
+                <span className="text-xs">ثيم</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs">ثيم البطاقات الافتراضي</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {CARD_THEMES.map((t) => (
+                <DropdownMenuItem key={t.id} onClick={() => setGlobalTheme(t.id)} className="gap-2 text-xs cursor-pointer">
+                  <span className="h-4 w-6 rounded border border-border/60 shrink-0" style={{ background: t.swatch }} />
+                  <span className="flex-1">{t.name}</span>
+                  {globalTheme === t.id && <Check className="h-3.5 w-3.5" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5 h-8">
+            <UserPlus className="h-3.5 w-3.5" /> إضافة حساب
+          </Button>
+        </div>
       </div>
+
+      {/* Summary header */}
+      {accounts.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-3">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold">
+              <TrendingUp className="h-3 w-3" /> لي عند الآخرين
+            </div>
+            <p className="text-base sm:text-lg font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400 mt-1">
+              {fmt(grand.owedToMe)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 to-rose-500/5 p-3">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-rose-700 dark:text-rose-400 font-semibold">
+              <TrendingDown className="h-3 w-3" /> عليّ للآخرين
+            </div>
+            <p className="text-base sm:text-lg font-extrabold tabular-nums text-rose-700 dark:text-rose-400 mt-1">
+              {fmt(grand.iOwe)}
+            </p>
+          </div>
+          <div className={`rounded-xl border p-3 ${netAll >= 0 ? "border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5" : "border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-rose-500/5"}`}>
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+              <Wallet className="h-3 w-3" /> الصافي
+            </div>
+            <p className={`text-base sm:text-lg font-extrabold tabular-nums mt-1 ${netAll >= 0 ? "text-primary" : "text-rose-600 dark:text-rose-400"}`}>
+              {fmt(Math.abs(netAll))}
+            </p>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
@@ -168,67 +335,135 @@ export default function FriendAccounts() {
             const totalReceived = accTxs.filter((t) => t.type === "withdraw").reduce((s, t) => s + Number(t.amount), 0);
             const net = totalSent - totalReceived;
             const status: "owes-me" | "i-owe" | "even" = net > 0 ? "owes-me" : net < 0 ? "i-owe" : "even";
-            const cardBg =
-              status === "owes-me"
-                ? "bg-[linear-gradient(135deg,#064e3b_0%,#0f1a14_55%,#000000_100%)]"
-                : status === "i-owe"
-                ? "bg-[linear-gradient(135deg,#3f0a18_0%,#1a0a0e_55%,#000000_100%)]"
-                : "bg-[linear-gradient(135deg,#1e293b_0%,#0f172a_55%,#000000_100%)]";
-            const accentColor =
-              status === "owes-me" ? "#34d399" : status === "i-owe" ? "#fb7185" : "#cbd5e1";
+            const theme = getTheme(a.id);
+            const cardBgStyle = theme.statusAware
+              ? {
+                  background:
+                    status === "owes-me"
+                      ? "linear-gradient(135deg,#064e3b 0%,#0f1a14 55%,#000000 100%)"
+                      : status === "i-owe"
+                      ? "linear-gradient(135deg,#3f0a18 0%,#1a0a0e 55%,#000000 100%)"
+                      : "linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#000000 100%)",
+                }
+              : { background: theme.bg };
+            const accentColor = theme.statusAware
+              ? status === "owes-me" ? "#34d399" : status === "i-owe" ? "#fb7185" : "#cbd5e1"
+              : theme.accent;
+            const isLight = theme.id === "platinum";
+            const textBase = isLight ? "text-slate-900" : "text-white";
+            const subtle = isLight ? "text-slate-600" : "text-white/50";
+            const subtleSoft = isLight ? "text-slate-500" : "text-white/40";
             return (
             <div key={a.id} className="group space-y-2">
               {/* Bank card */}
               <div
-                className={`relative ${cardBg} text-white rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] aspect-[1.586/1] overflow-hidden transition-all hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.7)] hover:-translate-y-0.5`}
+                style={cardBgStyle}
+                className={`relative ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] aspect-[1.586/1] overflow-hidden transition-all duration-300 hover:shadow-[0_24px_70px_-15px_rgba(0,0,0,0.75)] hover:-translate-y-1 ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
                 dir="ltr"
               >
                 {/* Decorative glow */}
                 <div
-                  className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full opacity-20 blur-3xl"
+                  className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full opacity-25 blur-3xl"
                   style={{ background: accentColor }}
                 />
-                <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_120%,#fff_0%,transparent_50%)]" />
+                <div className={`pointer-events-none absolute inset-0 opacity-[0.06] ${isLight ? "bg-[radial-gradient(circle_at_30%_120%,#000_0%,transparent_50%)]" : "bg-[radial-gradient(circle_at_30%_120%,#fff_0%,transparent_50%)]"}`} />
+                {/* Subtle grid pattern */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.04]"
+                  style={{
+                    backgroundImage: `linear-gradient(${isLight ? "#000" : "#fff"} 1px,transparent 1px),linear-gradient(90deg,${isLight ? "#000" : "#fff"} 1px,transparent 1px)`,
+                    backgroundSize: "22px 22px",
+                  }}
+                />
                 {/* Holographic stripe */}
                 <div
                   className="pointer-events-none absolute top-0 right-0 h-full w-24 opacity-30"
                   style={{
                     background:
-                      "linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)",
+                      `linear-gradient(135deg, transparent 30%, ${isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.18)"} 50%, transparent 70%)`,
                   }}
                 />
 
                 {/* Top row: bank + delete */}
                 <div className="relative flex items-start justify-between">
                   <div>
-                    <p className="text-[9px] uppercase tracking-[0.25em] text-white/50 font-medium">
+                    <p className={`text-[9px] uppercase tracking-[0.25em] ${subtle} font-medium`}>
                       Wallet
                     </p>
                     <p className="text-sm font-bold mt-0.5 tracking-wide" style={{ color: accentColor }}>
                       {a.bank_name}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setDeleteId(a.id)}
-                    className="text-white/30 hover:text-rose-400 transition opacity-0 group-hover:opacity-100"
-                    aria-label="حذف"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition" dir="rtl">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
+                          aria-label="تغيير اللون"
+                          title="تغيير لون البطاقة"
+                        >
+                          <Palette className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuLabel className="text-[10px]">لون هذه البطاقة</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {CARD_THEMES.map((t) => (
+                          <DropdownMenuItem
+                            key={t.id}
+                            onClick={() => setCardTheme(a.id, t.id)}
+                            className="gap-2 text-xs cursor-pointer"
+                          >
+                            <span className="h-3.5 w-5 rounded border border-border/60 shrink-0" style={{ background: t.swatch }} />
+                            <span className="flex-1">{t.name}</span>
+                            {(cardThemes[a.id] || globalTheme) === t.id && <Check className="h-3 w-3" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <button
+                      onClick={() => setDeleteId(a.id)}
+                      className={`${isLight ? "text-slate-500 hover:text-rose-600" : "text-white/40 hover:text-rose-400"} transition`}
+                      aria-label="حذف"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Chip + wifi */}
                 <div className="relative flex items-center gap-2 mt-5">
-                  <div className="h-7 w-9 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 shadow-inner relative overflow-hidden">
-                    <div className="absolute inset-1 border border-yellow-700/40 rounded-sm" />
-                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-px bg-yellow-700/40" />
+                  <div className={`h-7 w-9 rounded-md bg-gradient-to-br ${theme.chip} shadow-inner relative overflow-hidden`}>
+                    <div className="absolute inset-1 border border-black/30 rounded-sm" />
+                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-px bg-black/30" />
+                    <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-px bg-black/30" />
                   </div>
-                  <Wifi className="h-3.5 w-3.5 text-white/40 rotate-90" />
+                  <Wifi className={`h-3.5 w-3.5 ${subtleSoft} rotate-90`} />
+                  {/* Status pill */}
+                  <span
+                    className="ml-auto text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background:
+                        status === "owes-me"
+                          ? "rgba(52,211,153,0.18)"
+                          : status === "i-owe"
+                          ? "rgba(251,113,133,0.18)"
+                          : isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
+                      color:
+                        status === "owes-me"
+                          ? "#34d399"
+                          : status === "i-owe"
+                          ? "#fb7185"
+                          : isLight ? "#475569" : "#cbd5e1",
+                    }}
+                  >
+                    {status === "owes-me" ? "+" : status === "i-owe" ? "−" : "="}
+                  </span>
                 </div>
 
                 {/* Net amount */}
                 <div className="relative mt-3">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-medium">
+                  <p className={`text-[9px] uppercase tracking-[0.2em] ${subtleSoft} font-medium`}>
                     {status === "owes-me" ? "He owes" : status === "i-owe" ? "You owe" : "Net"}
                   </p>
                   <p
@@ -242,9 +477,9 @@ export default function FriendAccounts() {
                 {/* Cardholder row */}
                 <div className="relative flex items-end justify-between mt-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[8px] uppercase tracking-[0.25em] text-white/40">Card Holder</p>
+                    <p className={`text-[8px] uppercase tracking-[0.25em] ${subtleSoft}`}>Card Holder</p>
                     <p
-                      className="text-sm font-semibold tracking-wide truncate text-white/95"
+                      className={`text-sm font-semibold tracking-wide truncate ${isLight ? "text-slate-900" : "text-white/95"}`}
                       dir="rtl"
                       style={{ fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif" }}
                     >
@@ -252,11 +487,11 @@ export default function FriendAccounts() {
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-[8px] uppercase tracking-[0.25em] text-white/40">Sent / Received</p>
-                    <p className="text-[10px] font-semibold tabular-nums text-white/80 mt-0.5">
-                      <span className="text-emerald-300">+{fmt(totalSent)}</span>
-                      <span className="text-white/30 mx-1">/</span>
-                      <span className="text-rose-300">-{fmt(totalReceived)}</span>
+                    <p className={`text-[8px] uppercase tracking-[0.25em] ${subtleSoft}`}>Sent / Received</p>
+                    <p className={`text-[10px] font-semibold tabular-nums mt-0.5 ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                      <span className={isLight ? "text-emerald-700" : "text-emerald-300"}>+{fmt(totalSent)}</span>
+                      <span className={isLight ? "text-slate-400 mx-1" : "text-white/30 mx-1"}>/</span>
+                      <span className={isLight ? "text-rose-700" : "text-rose-300"}>-{fmt(totalReceived)}</span>
                     </p>
                   </div>
                 </div>
