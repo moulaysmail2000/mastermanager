@@ -530,6 +530,64 @@ export default function FriendAccounts() {
                   </div>
                 </div>
               </div>
+              {/* BACK */}
+              <div
+                className={`absolute inset-0 ${textBase} rounded-2xl p-4 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
+                style={{
+                  ...cardBgStyle,
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+                dir="rtl"
+              >
+                {/* magnetic stripe */}
+                <div className={`absolute left-0 right-0 top-4 h-7 ${isLight ? "bg-slate-800" : "bg-black/80"}`} />
+                <div className="relative mt-14 flex items-center justify-between gap-2">
+                  <p className={`text-[10px] uppercase tracking-[0.28em] font-display ${subtleSoft}`}>
+                    آخر الحركات
+                  </p>
+                  <button
+                    onClick={() => setFlipped((p) => ({ ...p, [a.id]: false }))}
+                    className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
+                    aria-label="عودة"
+                    title="عودة"
+                  >
+                    <RotateCw className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="relative mt-2 space-y-1 max-h-[58%] overflow-y-auto pr-1">
+                  {accTxs.length === 0 ? (
+                    <p className={`text-[11px] text-center py-3 ${subtleSoft}`}>لا توجد حركات</p>
+                  ) : (
+                    accTxs.slice(0, 6).map((t) => (
+                      <div
+                        key={t.id}
+                        className={`flex items-center justify-between gap-2 text-[10px] py-1 border-b ${isLight ? "border-slate-300/60" : "border-white/10"} last:border-0`}
+                      >
+                        <span className={`font-mono-num ${subtle}`}>
+                          {new Date(t.created_at).toLocaleDateString("fr-MA", { day: "2-digit", month: "2-digit" })}
+                        </span>
+                        <span className={`flex-1 truncate text-center font-arabic ${isLight ? "text-slate-700" : "text-white/70"}`}>
+                          {t.note || "—"}
+                        </span>
+                        <span
+                          className={`font-bold font-mono-num ${t.type === "deposit" ? "text-emerald-400" : "text-rose-400"}`}
+                        >
+                          {t.type === "deposit" ? "+" : "−"}{fmt(Number(t.amount))}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {a.notes && (
+                  <div className={`relative mt-2 text-[10px] font-arabic ${subtle} border-t ${isLight ? "border-slate-300/60" : "border-white/10"} pt-1.5 line-clamp-2`}>
+                    {a.notes}
+                  </div>
+                )}
+              </div>
+              </div>
+              </div>
 
               {/* Sent / Received chips — outside card, no overflow */}
               <div className="grid grid-cols-2 gap-1.5 px-1 pt-1">
