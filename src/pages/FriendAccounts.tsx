@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 type FriendAccount = {
@@ -161,142 +161,125 @@ export default function FriendAccounts() {
           <p className="text-muted-foreground text-sm">لا توجد حسابات بعد</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {accounts.map((a) => {
             const accTxs = txs.filter((t) => t.account_id === a.id);
             const totalSent = accTxs.filter((t) => t.type === "deposit").reduce((s, t) => s + Number(t.amount), 0);
             const totalReceived = accTxs.filter((t) => t.type === "withdraw").reduce((s, t) => s + Number(t.amount), 0);
             const net = totalSent - totalReceived;
+            const status: "owes-me" | "i-owe" | "even" = net > 0 ? "owes-me" : net < 0 ? "i-owe" : "even";
+            const cardBg =
+              status === "owes-me"
+                ? "bg-[linear-gradient(135deg,#064e3b_0%,#0f1a14_55%,#000000_100%)]"
+                : status === "i-owe"
+                ? "bg-[linear-gradient(135deg,#3f0a18_0%,#1a0a0e_55%,#000000_100%)]"
+                : "bg-[linear-gradient(135deg,#1e293b_0%,#0f172a_55%,#000000_100%)]";
+            const accentColor =
+              status === "owes-me" ? "#34d399" : status === "i-owe" ? "#fb7185" : "#cbd5e1";
             return (
-            <Card
-              key={a.id}
-              className="relative overflow-hidden border border-border/40 bg-card hover:border-primary/40 hover:shadow-xl transition-all group rounded-2xl"
-            >
-              {/* side accent bar */}
+            <div key={a.id} className="group space-y-2">
+              {/* Bank card */}
               <div
-                className={`absolute inset-y-0 right-0 w-1.5 ${
-                  net < 0
-                    ? "bg-gradient-to-b from-rose-500 to-rose-700"
-                    : net > 0
-                    ? "bg-gradient-to-b from-emerald-500 to-emerald-700"
-                    : "bg-gradient-to-b from-slate-400 to-slate-600"
-                }`}
-              />
-              {/* bottom accent bar */}
-              <div
-                className={`absolute inset-x-0 bottom-0 h-1.5 ${
-                  net < 0
-                    ? "bg-gradient-to-r from-rose-500 to-rose-700"
-                    : net > 0
-                    ? "bg-gradient-to-r from-emerald-500 to-emerald-700"
-                    : "bg-gradient-to-r from-slate-400 to-slate-600"
-                }`}
-              />
+                className={`relative ${cardBg} text-white rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] aspect-[1.586/1] overflow-hidden transition-all hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.7)] hover:-translate-y-0.5`}
+                dir="ltr"
+              >
+                {/* Decorative glow */}
+                <div
+                  className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full opacity-20 blur-3xl"
+                  style={{ background: accentColor }}
+                />
+                <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_120%,#fff_0%,transparent_50%)]" />
+                {/* Holographic stripe */}
+                <div
+                  className="pointer-events-none absolute top-0 right-0 h-full w-24 opacity-30"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)",
+                  }}
+                />
 
-              <CardContent className="p-4 space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className={`h-9 w-9 rounded-lg flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0 ${
-                        net < 0
-                          ? "bg-gradient-to-br from-rose-500 to-rose-700"
-                          : net > 0
-                          ? "bg-gradient-to-br from-emerald-500 to-emerald-700"
-                          : "bg-gradient-to-br from-slate-500 to-slate-700"
-                      }`}
+                {/* Top row: bank + delete */}
+                <div className="relative flex items-start justify-between">
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.25em] text-white/50 font-medium">
+                      Wallet
+                    </p>
+                    <p className="text-sm font-bold mt-0.5 tracking-wide" style={{ color: accentColor }}>
+                      {a.bank_name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDeleteId(a.id)}
+                    className="text-white/30 hover:text-rose-400 transition opacity-0 group-hover:opacity-100"
+                    aria-label="حذف"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* Chip + wifi */}
+                <div className="relative flex items-center gap-2 mt-5">
+                  <div className="h-7 w-9 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 shadow-inner relative overflow-hidden">
+                    <div className="absolute inset-1 border border-yellow-700/40 rounded-sm" />
+                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-px bg-yellow-700/40" />
+                  </div>
+                  <Wifi className="h-3.5 w-3.5 text-white/40 rotate-90" />
+                </div>
+
+                {/* Net amount */}
+                <div className="relative mt-3">
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-medium">
+                    {status === "owes-me" ? "He owes" : status === "i-owe" ? "You owe" : "Net"}
+                  </p>
+                  <p
+                    className="text-2xl font-extrabold tabular-nums tracking-tight mt-0.5"
+                    style={{ color: accentColor, fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    {fmt(Math.abs(net))}
+                  </p>
+                </div>
+
+                {/* Cardholder row */}
+                <div className="relative flex items-end justify-between mt-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[8px] uppercase tracking-[0.25em] text-white/40">Card Holder</p>
+                    <p
+                      className="text-sm font-semibold tracking-wide truncate text-white/95"
+                      dir="rtl"
                       style={{ fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif" }}
                     >
-                      {a.owner_name.slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <h3
-                        className="font-bold text-foreground truncate text-sm leading-tight"
-                        style={{ fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif", letterSpacing: "-0.01em" }}
-                      >
-                        {a.owner_name}
-                      </h3>
-                      <p className="text-[9px] text-muted-foreground truncate uppercase tracking-[0.15em] font-medium mt-0.5">
-                        {a.bank_name}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive opacity-100 md:opacity-0 md:group-hover:opacity-100 transition"
-                    onClick={() => setDeleteId(a.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                {/* Net big display */}
-                <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-                    {net > 0 ? "له عندي" : net < 0 ? "لي عنده" : "الصافي"}
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span
-                      className={`text-2xl font-extrabold tabular-nums tracking-tight ${
-                        net < 0
-                          ? "text-rose-600 dark:text-rose-400"
-                          : net > 0
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-foreground"
-                      }`}
-                      style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", fontVariantNumeric: "tabular-nums" }}
-                    >
-                      {fmt(Math.abs(net))}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Sent / Received split */}
-                <div className="flex items-stretch divide-x divide-border/60 rounded-lg bg-muted/40 border border-border/40 overflow-hidden">
-                  <div className="flex-1 p-2.5">
-                    <div className="flex items-center gap-1 text-[9px] text-emerald-700 dark:text-emerald-400 mb-0.5 font-semibold uppercase tracking-wider">
-                      <ArrowUpCircle className="h-2.5 w-2.5" /> أرسلت له
-                    </div>
-                    <p
-                      className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400"
-                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                    >
-                      {fmt(totalSent)}
+                      {a.owner_name}
                     </p>
                   </div>
-                  <div className="flex-1 p-2.5">
-                    <div className="flex items-center gap-1 text-[9px] text-sky-700 dark:text-sky-400 mb-0.5 font-semibold uppercase tracking-wider">
-                      <ArrowDownCircle className="h-2.5 w-2.5" /> أرسل لي
-                    </div>
-                    <p
-                      className="text-xs font-bold tabular-nums text-sky-700 dark:text-sky-400"
-                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                    >
-                      {fmt(totalReceived)}
+                  <div className="shrink-0 text-right">
+                    <p className="text-[8px] uppercase tracking-[0.25em] text-white/40">Sent / Received</p>
+                    <p className="text-[10px] font-semibold tabular-nums text-white/80 mt-0.5">
+                      <span className="text-emerald-300">+{fmt(totalSent)}</span>
+                      <span className="text-white/30 mx-1">/</span>
+                      <span className="text-rose-300">-{fmt(totalReceived)}</span>
                     </p>
                   </div>
                 </div>
+              </div>
 
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <Button
-                    size="sm"
-                    onClick={() => setTxDialog({ acc: a, type: "deposit" })}
-                    className="h-8 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                  >
-                    <Plus className="h-3 w-3" /> أرسلت له
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setTxDialog({ acc: a, type: "withdraw" })}
-                    className="h-8 gap-1 text-xs bg-sky-600 hover:bg-sky-700 text-white font-semibold"
-                  >
-                    <Minus className="h-3 w-3" /> أرسل لي
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Actions below card */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setTxDialog({ acc: a, type: "deposit" })}
+                  className="h-8 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
+                >
+                  <Plus className="h-3 w-3" /> أرسلت له
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setTxDialog({ acc: a, type: "withdraw" })}
+                  className="h-8 gap-1 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl"
+                >
+                  <Minus className="h-3 w-3" /> أرسل لي
+                </Button>
+              </div>
+            </div>
             );
           })}
         </div>
