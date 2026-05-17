@@ -134,6 +134,7 @@ export default function FriendAccounts() {
   const [editForm, setEditForm] = useState({ owner_name: "", bank_name: "", notes: "" });
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Per-card theme overrides + global default
   const [globalTheme, setGlobalTheme] = useState<string>(() => {
@@ -237,6 +238,7 @@ export default function FriendAccounts() {
       qc.invalidateQueries({ queryKey: ["friend_accounts"] });
       qc.invalidateQueries({ queryKey: ["friend_transactions"] });
       setDeleteId(null);
+      setDeleteConfirmText("");
       toast.success("تم حذف الحساب");
     },
     onError: (e: any) => toast.error(e.message),
@@ -834,23 +836,64 @@ export default function FriendAccounts() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDeleteId(null);
+            setDeleteConfirmText("");
+          }
+        }}
+      >
         <AlertDialogContent dir="rtl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>حذف الحساب؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيتم حذف الحساب وجميع حركاته نهائياً. لا يمكن التراجع عن هذا الإجراء.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteId && deleteAccount.mutate(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              حذف
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {(() => {
+            const accToDelete = accounts.find((x) => x.id === deleteId);
+            const expected = accToDelete?.owner_name ?? "";
+            const matches = deleteConfirmText.trim() === expected.trim() && expected.length > 0;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>حذف الحساب؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف الحساب وجميع حركاته نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-2 py-2">
+                  <Label className="text-xs">
+                    لتأكيد الحذف، انسخ والصق اسم صاحب الحساب:{" "}
+                    <span className="font-bold text-foreground select-all">{expected}</span>
+                  </Label>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={expected}
+                    autoFocus
+                    dir="auto"
+                  />
+                  {!matches && deleteConfirmText.length > 0 && (
+                    <p className="text-[11px] text-destructive">الاسم غير مطابق</p>
+                  )}
+                </div>
+                <AlertDialogFooter className="flex-row-reverse gap-2">
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      if (!matches) {
+                        e.preventDefault();
+                        toast.error("يجب نسخ الاسم بالضبط لتأكيد الحذف");
+                        return;
+                      }
+                      deleteId && deleteAccount.mutate(deleteId);
+                    }}
+                    disabled={!matches}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    تأكيد الحذف
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>
