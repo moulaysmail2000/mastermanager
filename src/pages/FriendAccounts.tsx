@@ -369,7 +369,6 @@ export default function FriendAccounts() {
               >
               {/* FRONT */}
               <div
-                style={cardBgStyle}
                 className={`absolute inset-0 ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
                 style={{ ...cardBgStyle, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                 dir="ltr"
