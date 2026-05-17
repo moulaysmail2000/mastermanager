@@ -793,6 +793,47 @@ export default function FriendAccounts() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Account Dialog */}
+      <Dialog open={!!editAcc} onOpenChange={(o) => !o && setEditAcc(null)}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل معلومات البطاقة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">اسم صاحب الحساب</Label>
+              <Input
+                value={editForm.owner_name}
+                onChange={(e) => setEditForm({ ...editForm, owner_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">اسم البنك</Label>
+              <Input
+                value={editForm.bank_name}
+                onChange={(e) => setEditForm({ ...editForm, bank_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">ملاحظات (اختياري)</Label>
+              <Textarea
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-row-reverse gap-2">
+            <Button onClick={() => updateAccount.mutate()} disabled={updateAccount.isPending}>
+              حفظ التغييرات
+            </Button>
+            <Button variant="outline" onClick={() => setEditAcc(null)}>
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
