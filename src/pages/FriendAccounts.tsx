@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 type FriendAccount = {
@@ -126,6 +127,7 @@ export default function FriendAccounts() {
 
   const [txDialog, setTxDialog] = useState<{ acc: FriendAccount; type: "deposit" | "withdraw" } | null>(null);
   const [amount, setAmount] = useState("");
+  const [txFilter, setTxFilter] = useState<string>("all");
   const [note, setNote] = useState("");
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
