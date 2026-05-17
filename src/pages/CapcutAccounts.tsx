@@ -717,55 +717,110 @@ export default function CapcutAccounts() {
             </div>
           ) : viewMode === "cards" ? (
             <div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                 {filtered.map((a) => {
                   const count = a.delivered_count || 0;
                   const isSold = a.status === "مباع";
                   const isNotWorking = a.status === "لايشتغل";
                   const rowLimit = getLimitForAccount(a);
                   const isSelected = selectedIds.has(a.id);
+                  const statusLabel = isNotWorking ? "لايشتغل" : isSold ? "مباع" : count >= rowLimit ? "مكتمل" : count > 0 ? "قيد التسليم" : "متاح";
+                  const statusTone = isNotWorking
+                    ? "bg-destructive/15 text-destructive ring-destructive/30"
+                    : isSold
+                    ? "bg-warning/15 text-warning ring-warning/30"
+                    : count >= rowLimit
+                    ? "bg-muted text-muted-foreground ring-border"
+                    : count > 0
+                    ? "bg-warning/10 text-warning ring-warning/25"
+                    : "bg-success/10 text-success ring-success/25";
+                  const dotTone = isNotWorking
+                    ? "bg-destructive"
+                    : isSold
+                    ? "bg-warning"
+                    : count > 0
+                    ? "bg-warning"
+                    : "bg-success";
+                  const initial = (a.username || "?").trim().charAt(0).toUpperCase();
                   return (
                     <div
                       key={a.id}
                       onClick={() => { if (selectionMode) toggleSelect(a.id); }}
                       className={cn(
-                        "group relative rounded-xl border bg-card p-2.5 flex flex-col gap-2 transition-all",
-                        isSold && "opacity-50",
-                        isNotWorking && "bg-destructive/5 border-destructive/30",
+                        "group relative overflow-hidden rounded-2xl border p-3 flex flex-col gap-2.5 transition-all duration-200",
+                        "bg-gradient-to-b from-card to-card/60",
+                        "shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06),0_12px_28px_-12px_rgba(0,0,0,0.18)]",
+                        isSold && "opacity-55",
+                        isNotWorking && "from-destructive/[0.06] to-destructive/[0.02] border-destructive/30",
                         isSelected ? "border-primary ring-2 ring-primary/30" : "border-border/60 hover:border-border",
                         selectionMode && "cursor-pointer"
                       )}
                     >
-                      <div className="flex items-center justify-between gap-1">
+                      {/* Accent stripe at top */}
+                      <span
+                        className={cn(
+                          "pointer-events-none absolute inset-x-0 top-0 h-[3px]",
+                          isNotWorking
+                            ? "bg-gradient-to-r from-destructive/50 via-destructive to-destructive/50"
+                            : isSold
+                            ? "bg-gradient-to-r from-warning/50 via-warning to-warning/50"
+                            : count > 0
+                            ? "bg-gradient-to-r from-warning/40 via-warning/70 to-warning/40"
+                            : "bg-gradient-to-r from-primary/40 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                        )}
+                      />
+
+                      {/* Top: status pill + delivery dots + selection */}
+                      <div className="flex items-center justify-between gap-1.5">
                         <span className={cn(
-                          "h-2 w-2 rounded-full shrink-0",
-                          isNotWorking ? "bg-destructive" : isSold ? "bg-warning" : count > 0 ? "bg-warning" : "bg-success"
-                        )} />
-                        <div className="flex items-center gap-0.5">
-                          <UserCheck className={cn("h-3 w-3", count >= 1 ? "text-primary" : "text-muted-foreground/25")} />
-                          {rowLimit >= 2 && <UserCheck className={cn("h-3 w-3", count >= 2 ? "text-primary" : "text-muted-foreground/25")} />}
-                          {rowLimit >= 3 && <UserCheck className={cn("h-3 w-3", count >= 3 ? "text-primary" : "text-muted-foreground/25")} />}
+                          "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold ring-1 font-arabic leading-none",
+                          statusTone
+                        )}>
+                          <span className={cn("h-1.5 w-1.5 rounded-full", dotTone)} />
+                          {statusLabel}
+                        </span>
+                        <div className="flex items-center gap-0.5" title={`${count} / ${rowLimit}`}>
+                          <UserCheck className={cn("h-3 w-3", count >= 1 ? "text-primary" : "text-muted-foreground/20")} />
+                          {rowLimit >= 2 && <UserCheck className={cn("h-3 w-3", count >= 2 ? "text-primary" : "text-muted-foreground/20")} />}
+                          {rowLimit >= 3 && <UserCheck className={cn("h-3 w-3", count >= 3 ? "text-primary" : "text-muted-foreground/20")} />}
                         </div>
                         {selectionMode && (
                           <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(a.id)} className="h-3.5 w-3.5" />
                         )}
                       </div>
-                      <div className="min-w-0">
+
+                      {/* Body: avatar + credentials */}
+                      <div className="flex items-start gap-2 min-w-0">
                         <div className={cn(
-                          "font-mono text-[11px] font-medium truncate",
-                          isNotWorking && "line-through text-muted-foreground"
-                        )} title={a.username}>
-                          {a.username}
+                          "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center font-bold text-[13px] ring-1",
+                          isNotWorking
+                            ? "bg-destructive/10 text-destructive ring-destructive/20"
+                            : "bg-gradient-to-br from-primary/20 to-primary/5 text-primary ring-primary/20"
+                        )}>
+                          {initial}
                         </div>
-                        <div className="font-mono text-[10px] text-muted-foreground truncate" title={a.password_or_code}>
-                          {a.password_or_code}
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <div className={cn(
+                            "font-mono text-[11px] font-semibold text-foreground truncate leading-tight",
+                            isNotWorking && "line-through text-muted-foreground"
+                          )} title={a.username}>
+                            {a.username}
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Lock className="h-2.5 w-2.5 text-muted-foreground/60 shrink-0" />
+                            <span className="font-mono text-[10px] text-muted-foreground truncate" title={a.password_or_code}>
+                              {a.password_or_code}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-border/40">
+
+                      {/* Footer: actions */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-border/50">
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7 text-muted-foreground hover:text-warning disabled:opacity-30"
+                          className="h-7 w-7 rounded-md text-muted-foreground hover:text-warning hover:bg-warning/10 disabled:opacity-30"
                           onClick={(e) => { e.stopPropagation(); handleUndoDeliver(a); }}
                           disabled={count === 0}
                           title="تراجع"
@@ -776,7 +831,7 @@ export default function CapcutAccounts() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 text-muted-foreground"
+                            className="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
                             onClick={(e) => { e.stopPropagation(); handleDeliver(a, "credentials"); }}
                             disabled={isSold || isNotWorking}
                             title="نسخ البيانات"
@@ -786,7 +841,7 @@ export default function CapcutAccounts() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 text-primary"
+                            className="h-7 w-7 rounded-md text-primary hover:text-primary hover:bg-primary/10"
                             onClick={(e) => { e.stopPropagation(); handleDeliver(a); }}
                             disabled={isSold || isNotWorking}
                             title="نسخ الرسالة"
