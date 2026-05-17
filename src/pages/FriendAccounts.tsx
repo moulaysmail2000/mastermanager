@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown, RotateCw } from "lucide-react";
+import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -128,8 +128,10 @@ export default function FriendAccounts() {
   const [txDialog, setTxDialog] = useState<{ acc: FriendAccount; type: "deposit" | "withdraw" } | null>(null);
   const [amount, setAmount] = useState("");
   const [txFilter, setTxFilter] = useState<string>("all");
-  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState("");
+
+  const [editAcc, setEditAcc] = useState<FriendAccount | null>(null);
+  const [editForm, setEditForm] = useState({ owner_name: "", bank_name: "", notes: "" });
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -236,6 +238,29 @@ export default function FriendAccounts() {
       qc.invalidateQueries({ queryKey: ["friend_transactions"] });
       setDeleteId(null);
       toast.success("تم حذف الحساب");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const updateAccount = useMutation({
+    mutationFn: async () => {
+      if (!editAcc) return;
+      if (!editForm.owner_name.trim() || !editForm.bank_name.trim())
+        throw new Error("املأ الحقول المطلوبة");
+      const { error } = await supabase
+        .from("friend_accounts")
+        .update({
+          owner_name: editForm.owner_name.trim(),
+          bank_name: editForm.bank_name.trim(),
+          notes: editForm.notes.trim() || null,
+        })
+        .eq("id", editAcc.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["friend_accounts"] });
+      setEditAcc(null);
+      toast.success("تم تحديث البطاقة");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -358,19 +383,10 @@ export default function FriendAccounts() {
             const subtleSoft = isLight ? "text-slate-500" : "text-white/40";
             return (
             <div key={a.id} className="group space-y-2">
-              {/* Bank card — flip container */}
-              <div className="relative aspect-[1.586/1]" style={{ perspective: "1200px" }}>
+              {/* Bank card */}
               <div
-                className="relative w-full h-full transition-transform duration-700"
-                style={{
-                  transformStyle: "preserve-3d",
-                  transform: flipped[a.id] ? "rotateY(180deg)" : "rotateY(0deg)",
-                }}
-              >
-              {/* FRONT */}
-              <div
-                className={`absolute inset-0 ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
-                style={{ ...cardBgStyle, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+                className={`relative aspect-[1.586/1] ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
+                style={{ ...cardBgStyle }}
                 dir="ltr"
               >
                 {/* Decorative glow */}
@@ -410,6 +426,21 @@ export default function FriendAccounts() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition" dir="rtl">
+                    <button
+                      onClick={() => {
+                        setEditAcc(a);
+                        setEditForm({
+                          owner_name: a.owner_name,
+                          bank_name: a.bank_name,
+                          notes: a.notes || "",
+                        });
+                      }}
+                      className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
+                      aria-label="تعديل"
+                      title="تعديل معلومات البطاقة"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
@@ -442,14 +473,6 @@ export default function FriendAccounts() {
                       aria-label="حذف"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setFlipped((p) => ({ ...p, [a.id]: !p[a.id] }))}
-                      className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
-                      aria-label="قلب البطاقة"
-                      title="عرض التفاصيل"
-                    >
-                      <RotateCw className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -528,64 +551,6 @@ export default function FriendAccounts() {
                     </p>
                   </div>
                 </div>
-              </div>
-              {/* BACK */}
-              <div
-                className={`absolute inset-0 ${textBase} rounded-2xl p-4 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
-                style={{
-                  ...cardBgStyle,
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                  transform: "rotateY(180deg)",
-                }}
-                dir="rtl"
-              >
-                {/* magnetic stripe */}
-                <div className={`absolute left-0 right-0 top-4 h-7 ${isLight ? "bg-slate-800" : "bg-black/80"}`} />
-                <div className="relative mt-14 flex items-center justify-between gap-2">
-                  <p className={`text-[10px] uppercase tracking-[0.28em] font-display ${subtleSoft}`}>
-                    آخر الحركات
-                  </p>
-                  <button
-                    onClick={() => setFlipped((p) => ({ ...p, [a.id]: false }))}
-                    className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
-                    aria-label="عودة"
-                    title="عودة"
-                  >
-                    <RotateCw className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="relative mt-2 space-y-1 max-h-[58%] overflow-y-auto pr-1">
-                  {accTxs.length === 0 ? (
-                    <p className={`text-[11px] text-center py-3 ${subtleSoft}`}>لا توجد حركات</p>
-                  ) : (
-                    accTxs.slice(0, 6).map((t) => (
-                      <div
-                        key={t.id}
-                        className={`flex items-center justify-between gap-2 text-[10px] py-1 border-b ${isLight ? "border-slate-300/60" : "border-white/10"} last:border-0`}
-                      >
-                        <span className={`font-mono-num ${subtle}`}>
-                          {new Date(t.created_at).toLocaleDateString("fr-MA", { day: "2-digit", month: "2-digit" })}
-                        </span>
-                        <span className={`flex-1 truncate text-center font-arabic ${isLight ? "text-slate-700" : "text-white/70"}`}>
-                          {t.note || "—"}
-                        </span>
-                        <span
-                          className={`font-bold font-mono-num ${t.type === "deposit" ? "text-emerald-400" : "text-rose-400"}`}
-                        >
-                          {t.type === "deposit" ? "+" : "−"}{fmt(Number(t.amount))}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-                {a.notes && (
-                  <div className={`relative mt-2 text-[10px] font-arabic ${subtle} border-t ${isLight ? "border-slate-300/60" : "border-white/10"} pt-1.5 line-clamp-2`}>
-                    {a.notes}
-                  </div>
-                )}
-              </div>
-              </div>
               </div>
 
               {/* Sent / Received chips — outside card, no overflow */}
@@ -822,6 +787,47 @@ export default function FriendAccounts() {
               تأكيد
             </Button>
             <Button variant="outline" onClick={() => setTxDialog(null)}>
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Account Dialog */}
+      <Dialog open={!!editAcc} onOpenChange={(o) => !o && setEditAcc(null)}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل معلومات البطاقة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">اسم صاحب الحساب</Label>
+              <Input
+                value={editForm.owner_name}
+                onChange={(e) => setEditForm({ ...editForm, owner_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">اسم البنك</Label>
+              <Input
+                value={editForm.bank_name}
+                onChange={(e) => setEditForm({ ...editForm, bank_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">ملاحظات (اختياري)</Label>
+              <Textarea
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-row-reverse gap-2">
+            <Button onClick={() => updateAccount.mutate()} disabled={updateAccount.isPending}>
+              حفظ التغييرات
+            </Button>
+            <Button variant="outline" onClick={() => setEditAcc(null)}>
               إلغاء
             </Button>
           </DialogFooter>
