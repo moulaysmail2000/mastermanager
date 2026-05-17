@@ -358,10 +358,20 @@ export default function FriendAccounts() {
             const subtleSoft = isLight ? "text-slate-500" : "text-white/40";
             return (
             <div key={a.id} className="group space-y-2">
-              {/* Bank card */}
+              {/* Bank card — flip container */}
+              <div className="relative aspect-[1.586/1]" style={{ perspective: "1200px" }}>
+              <div
+                className="relative w-full h-full transition-transform duration-700"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: flipped[a.id] ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+              >
+              {/* FRONT */}
               <div
                 style={cardBgStyle}
-                className={`relative ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] aspect-[1.586/1] overflow-hidden transition-all duration-300 hover:shadow-[0_24px_70px_-15px_rgba(0,0,0,0.75)] hover:-translate-y-1 ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
+                className={`absolute inset-0 ${textBase} rounded-2xl p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ${isLight ? "ring-slate-300/60" : "ring-white/5"}`}
+                style={{ ...cardBgStyle, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                 dir="ltr"
               >
                 {/* Decorative glow */}
@@ -433,6 +443,14 @@ export default function FriendAccounts() {
                       aria-label="حذف"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setFlipped((p) => ({ ...p, [a.id]: !p[a.id] }))}
+                      className={`${isLight ? "text-slate-500 hover:text-slate-900" : "text-white/40 hover:text-white"} transition`}
+                      aria-label="قلب البطاقة"
+                      title="عرض التفاصيل"
+                    >
+                      <RotateCw className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
