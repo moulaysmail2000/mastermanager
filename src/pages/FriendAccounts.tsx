@@ -385,12 +385,12 @@ export default function FriendAccounts() {
                 />
 
                 {/* Top row: bank + delete */}
-                <div className="relative flex items-start justify-between">
+                <div className="relative flex items-start justify-between gap-2">
                   <div>
-                    <p className={`text-[9px] uppercase tracking-[0.25em] ${subtle} font-medium`}>
+                    <p className={`text-[8px] uppercase tracking-[0.32em] ${subtle} font-semibold font-display`}>
                       Wallet
                     </p>
-                    <p className="text-sm font-bold mt-0.5 tracking-wide" style={{ color: accentColor }}>
+                    <p className="text-[15px] font-bold mt-0.5 tracking-tight font-display" style={{ color: accentColor }}>
                       {a.bank_name}
                     </p>
                   </div>
@@ -432,16 +432,19 @@ export default function FriendAccounts() {
                 </div>
 
                 {/* Chip + wifi */}
-                <div className="relative flex items-center gap-2 mt-5">
-                  <div className={`h-7 w-9 rounded-md bg-gradient-to-br ${theme.chip} shadow-inner relative overflow-hidden`}>
-                    <div className="absolute inset-1 border border-black/30 rounded-sm" />
-                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-px bg-black/30" />
-                    <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-px bg-black/30" />
+                <div className="relative flex items-center gap-2.5 mt-4">
+                  <div className={`h-8 w-10 rounded-md bg-gradient-to-br ${theme.chip} shadow-[inset_0_1px_2px_rgba(0,0,0,0.4),0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden`}>
+                    {/* refined chip lines */}
+                    <div className="absolute inset-[3px] rounded-[3px] border border-black/40" />
+                    <div className="absolute left-[3px] right-[3px] top-1/2 -translate-y-1/2 h-px bg-black/40" />
+                    <div className="absolute top-[3px] bottom-[3px] left-1/2 -translate-x-1/2 w-px bg-black/40" />
+                    <div className="absolute left-[3px] right-[3px] top-[30%] h-px bg-black/25" />
+                    <div className="absolute left-[3px] right-[3px] top-[70%] h-px bg-black/25" />
                   </div>
                   <Wifi className={`h-3.5 w-3.5 ${subtleSoft} rotate-90`} />
-                  {/* Status pill */}
+                  {/* Status pill — pushed to far right */}
                   <span
-                    className="ml-auto text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full"
+                    className="ml-auto text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-1 rounded-full font-display"
                     style={{
                       background:
                         status === "owes-me"
@@ -457,43 +460,70 @@ export default function FriendAccounts() {
                           : isLight ? "#475569" : "#cbd5e1",
                     }}
                   >
-                    {status === "owes-me" ? "+" : status === "i-owe" ? "−" : "="}
+                    {status === "owes-me" ? "Credit" : status === "i-owe" ? "Debit" : "Settled"}
                   </span>
                 </div>
 
                 {/* Net amount */}
                 <div className="relative mt-3">
-                  <p className={`text-[9px] uppercase tracking-[0.2em] ${subtleSoft} font-medium`}>
-                    {status === "owes-me" ? "He owes" : status === "i-owe" ? "You owe" : "Net"}
+                  <p className={`text-[8px] uppercase tracking-[0.32em] ${subtleSoft} font-semibold font-display`}>
+                    {status === "owes-me" ? "Owed to you" : status === "i-owe" ? "You owe" : "Net balance"}
                   </p>
                   <p
-                    className="text-2xl font-extrabold tabular-nums tracking-tight mt-0.5"
-                    style={{ color: accentColor, fontFamily: "'Inter', system-ui, sans-serif" }}
+                    className="text-[28px] font-extrabold tracking-tight mt-1 font-mono-num leading-none"
+                    style={{ color: accentColor }}
                   >
                     {fmt(Math.abs(net))}
                   </p>
                 </div>
 
-                {/* Cardholder row */}
-                <div className="relative flex items-end justify-between mt-3">
+                {/* Masked card number — decorative */}
+                <div className={`relative mt-3 flex items-center gap-2 text-[11px] font-mono-num tracking-[0.18em] ${isLight ? "text-slate-500" : "text-white/55"}`}>
+                  <span>••••</span>
+                  <span>••••</span>
+                  <span>••••</span>
+                  <span className={isLight ? "text-slate-700" : "text-white/80"}>
+                    {a.id.replace(/[^0-9]/g, "").padStart(4, "0").slice(-4)}
+                  </span>
+                </div>
+
+                {/* Cardholder row — single line, no overflow */}
+                <div className="relative flex items-end justify-between mt-2 gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className={`text-[8px] uppercase tracking-[0.25em] ${subtleSoft}`}>Card Holder</p>
+                    <p className={`text-[7px] uppercase tracking-[0.32em] ${subtleSoft} font-semibold font-display`}>Card Holder</p>
                     <p
-                      className={`text-sm font-semibold tracking-wide truncate ${isLight ? "text-slate-900" : "text-white/95"}`}
+                      className={`text-[13px] font-bold tracking-wide truncate mt-0.5 font-arabic ${isLight ? "text-slate-900" : "text-white"}`}
                       dir="rtl"
-                      style={{ fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif" }}
                     >
                       {a.owner_name}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className={`text-[8px] uppercase tracking-[0.25em] ${subtleSoft}`}>Sent / Received</p>
-                    <p className={`text-[10px] font-semibold tabular-nums mt-0.5 ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                      <span className={isLight ? "text-emerald-700" : "text-emerald-300"}>+{fmt(totalSent)}</span>
-                      <span className={isLight ? "text-slate-400 mx-1" : "text-white/30 mx-1"}>/</span>
-                      <span className={isLight ? "text-rose-700" : "text-rose-300"}>-{fmt(totalReceived)}</span>
+                    <p className={`text-[7px] uppercase tracking-[0.32em] ${subtleSoft} font-semibold font-display`}>Valid Thru</p>
+                    <p className={`text-[12px] font-bold tabular-nums mt-0.5 font-mono-num ${isLight ? "text-slate-900" : "text-white"}`}>
+                      ∞ / ∞
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Sent / Received chips — outside card, no overflow */}
+              <div className="grid grid-cols-2 gap-1.5 px-1 pt-1">
+                <div className="flex items-center justify-between gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-1">
+                  <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400 font-display flex items-center gap-1">
+                    <ArrowUpCircle className="h-2.5 w-2.5" /> Sent
+                  </span>
+                  <span className="text-[10px] font-bold font-mono-num text-emerald-700 dark:text-emerald-400">
+                    {fmt(totalSent)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-1 rounded-lg bg-rose-500/10 border border-rose-500/20 px-2 py-1">
+                  <span className="text-[9px] uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-400 font-display flex items-center gap-1">
+                    <ArrowDownCircle className="h-2.5 w-2.5" /> Recv
+                  </span>
+                  <span className="text-[10px] font-bold font-mono-num text-rose-700 dark:text-rose-400">
+                    {fmt(totalReceived)}
+                  </span>
                 </div>
               </div>
 
