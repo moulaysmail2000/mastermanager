@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown, RotateCw } from "lucide-react";
+import { Plus, Minus, UserPlus, Trash2, Wallet, ArrowDownCircle, ArrowUpCircle, Wifi, Palette, Check, TrendingUp, TrendingDown, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -128,8 +128,10 @@ export default function FriendAccounts() {
   const [txDialog, setTxDialog] = useState<{ acc: FriendAccount; type: "deposit" | "withdraw" } | null>(null);
   const [amount, setAmount] = useState("");
   const [txFilter, setTxFilter] = useState<string>("all");
-  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState("");
+
+  const [editAcc, setEditAcc] = useState<FriendAccount | null>(null);
+  const [editForm, setEditForm] = useState({ owner_name: "", bank_name: "", notes: "" });
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
