@@ -555,8 +555,28 @@ export default function FriendAccounts() {
       {/* Mini Transaction Log */}
       <Card className="border-border/50">
         <CardContent className="pt-5">
-          <h2 className="text-sm font-bold mb-3 text-foreground">سجل الحركات</h2>
-          {txs.length === 0 ? (
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <h2 className="text-sm font-bold text-foreground">سجل الحركات</h2>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground whitespace-nowrap">تصفية حسب البطاقة:</Label>
+              <Select value={txFilter} onValueChange={setTxFilter}>
+                <SelectTrigger className="h-8 text-xs w-[200px]">
+                  <SelectValue placeholder="كل البطاقات" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل البطاقات</SelectItem>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.owner_name} — {a.bank_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {(() => {
+            const filteredTxs = txFilter === "all" ? txs : txs.filter((t) => t.account_id === txFilter);
+            return filteredTxs.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-6">لا توجد عمليات بعد</p>
           ) : (
             <div className="rounded-lg border border-border/50 overflow-hidden">
@@ -571,7 +591,7 @@ export default function FriendAccounts() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {txs.map((t) => (
+                  {filteredTxs.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {new Date(t.created_at).toLocaleString("fr-MA", { dateStyle: "short", timeStyle: "short" })}
@@ -603,7 +623,8 @@ export default function FriendAccounts() {
                 </TableBody>
               </Table>
             </div>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
 
