@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -467,7 +468,7 @@ export default function CapcutAccounts() {
             <Button onClick={handlePaste} size="sm" disabled={insertMutation.isPending || !activeTab} className="gap-1.5">
               <ClipboardPaste className="h-3.5 w-3.5" /> لصق
             </Button>
-            <input ref={fileInputRef} type="file" accept=".csv,.txt,text/csv,text/plain" className="hidden" onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" accept=".csv,.txt,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="hidden" onChange={handleFileUpload} />
             <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="outline" disabled={!activeTab} className="gap-1.5">
               <Upload className="h-3.5 w-3.5" /> رفع G2G
             </Button>
