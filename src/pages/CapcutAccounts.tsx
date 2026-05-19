@@ -269,6 +269,42 @@ export default function CapcutAccounts() {
     if (!file) return;
     if (!activeTab) { toast.error("يرجى اختيار تصنيف أولاً"); return; }
     const isTxt = /\.txt$/i.test(file.name) || file.type === "text/plain";
+    const isXlsx = /\.(xlsx|xls)$/i.test(file.name) || file.type.includes("spreadsheet") || file.type.includes("excel");
+    if (isXlsx) {
+      file.arrayBuffer().then((buf) => {
+        const wb = XLSX.read(buf, { type: "array" });
+        const seen = new Set<string>();
+        const rows: { email: string; password: string; selected: boolean }[] = [];
+        for (const sheetName of wb.SheetNames) {
+          const sheet = wb.Sheets[sheetName];
+          const data = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, blankrows: false, defval: "" });
+          // find header row containing "account" / "email" and "password"
+          let emailIdx = -1, pwdIdx = -1, startRow = 0;
+          for (let i = 0; i < Math.min(data.length, 20); i++) {
+            const row = (data[i] || []).map((c: any) => String(c ?? "").toLowerCase());
+            const eIdx = row.findIndex(c => c.includes("account") || c.includes("email") || c.includes("user id") || c.includes("login"));
+            const pIdx = row.findIndex(c => c.includes("password") || c.includes("pass"));
+            if (eIdx !== -1 && pIdx !== -1) { emailIdx = eIdx; pwdIdx = pIdx; startRow = i + 1; break; }
+          }
+          if (emailIdx === -1) { emailIdx = 0; pwdIdx = 1; startRow = 0; }
+          for (let i = startRow; i < data.length; i++) {
+            const row = data[i] || [];
+            const rawEmail = String(row[emailIdx] ?? "").replace(/^['"\s]+|['"\s]+$/g, "");
+            const password = String(row[pwdIdx] ?? "").trim();
+            const m = rawEmail.match(EMAIL_RE);
+            const email = m ? m[0] : rawEmail.trim();
+            if (!email || !password) continue;
+            if (seen.has(email.toLowerCase())) continue;
+            seen.add(email.toLowerCase());
+            rows.push({ email, password, selected: true });
+          }
+        }
+        if (!rows.length) { toast.error("لم يتم العثور على حسابات صالحة"); return; }
+        setImportRows(rows);
+        setImportDialogOpen(true);
+      }).catch(() => toast.error("فشل قراءة الملف"));
+      return;
+    }
     if (isTxt) {
       file.text().then((text) => {
         const seen = new Set<string>();
