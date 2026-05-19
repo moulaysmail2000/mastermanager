@@ -506,7 +506,7 @@ export default function CapcutAccounts() {
             </Button>
             <input ref={fileInputRef} type="file" accept=".csv,.txt,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="hidden" onChange={handleFileUpload} />
             <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="outline" disabled={!activeTab} className="gap-1.5">
-              <Upload className="h-3.5 w-3.5" /> رفع G2G
+              <Upload className="h-3.5 w-3.5" /> رفع G2G / Z2U
             </Button>
             <Button onClick={() => setAddCategoryOpen(true)} size="sm" variant="outline" className="gap-1.5">
               <Plus className="h-3.5 w-3.5" /> تصنيف
