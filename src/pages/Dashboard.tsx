@@ -439,7 +439,7 @@ export default function Dashboard() {
   const goalProgress = goal > 0 ? Math.min(100, (Math.max(0, stats.profit) / goal) * 100) : 0;
 
   // ===== Section Order (drag & drop) =====
-  const SECTION_ORDER_KEY = "dashboard_section_order_v4";
+  const SECTION_ORDER_KEY = "dashboard_section_order_v5";
   const DEFAULT_SECTIONS = ["kpis", "charts", "weekday", "alerts", "goal", "recent"] as const;
   type SectionId = typeof DEFAULT_SECTIONS[number];
   const [reorderMode, setReorderMode] = useState(false);
