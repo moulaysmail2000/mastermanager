@@ -410,7 +410,7 @@ export default function Dashboard() {
       list.push({ id: "low-stock", level: "danger", text: `المخزون منخفض — ${stats.availableAccounts} حساب فقط متاح`, to: "/capcut-accounts" });
     }
     if (stats.profit < 0) {
-      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${fmt(stats.profit)} MAD)`, to: "/finance" });
+      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${money(stats.profit)} MAD)`, to: "/finance" });
     }
     if (stats.totalAccounts === 0) {
       list.push({ id: "no-accounts", level: "info", text: "لا توجد حسابات CapCut بعد — أضف الأول الآن", to: "/capcut-accounts" });
@@ -524,7 +524,7 @@ export default function Dashboard() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => changeCurrency("MAD")} className="gap-2 text-xs cursor-pointer">
                     <span className="flex-1">الدرهم المغربي</span>
-                    <span className="font-bold">MAD</span>
+                    <span className="font-bold">{CUR}</span>
                     {currency === "MAD" && <Check className="h-3.5 w-3.5" />}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changeCurrency("USD")} className="gap-2 text-xs cursor-pointer">
@@ -556,9 +556,9 @@ export default function Dashboard() {
             <Reveal show={financeReady && capcutReady} delay={50}>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  <StatCard key="inc" title="مداخيل الشهر" value={fmt(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
-                  <StatCard key="exp" title="مصاريف الشهر" value={fmt(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
-                  <StatCard key="prof" title="الربح الصافي" value={fmt(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
+                  <StatCard key="inc" title="مداخيل الشهر" value={money(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
+                  <StatCard key="exp" title="مصاريف الشهر" value={money(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
+                  <StatCard key="prof" title="الربح الصافي" value={money(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
                   <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
                 ].map((card, i) => (
                   <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
@@ -641,7 +641,7 @@ export default function Dashboard() {
                         className="h-9"
                         autoFocus
                       />
-                      <span className="text-xs text-muted-foreground">MAD</span>
+                      <span className="text-xs text-muted-foreground">{CUR}</span>
                       <Button size="sm" className="h-9 gap-1" onClick={saveGoal}>
                         <Check className="h-3.5 w-3.5" /> حفظ
                       </Button>
@@ -655,18 +655,18 @@ export default function Dashboard() {
                         <div>
                           <p className="text-[11px] text-muted-foreground">المُنجز</p>
                           <p className={cn("text-2xl font-bold tabular-nums", stats.profit >= 0 ? "text-success" : "text-destructive")}>
-                            {fmt(Math.max(0, stats.profit))} <span className="text-xs font-normal text-muted-foreground">MAD</span>
+                            {money(Math.max(0, stats.profit))} <span className="text-xs font-normal text-muted-foreground">{CUR}</span>
                           </p>
                         </div>
                         <div className="text-left">
                           <p className="text-[11px] text-muted-foreground">الهدف</p>
-                          <p className="text-lg font-semibold tabular-nums">{fmt(goal)} <span className="text-xs font-normal text-muted-foreground">MAD</span></p>
+                          <p className="text-lg font-semibold tabular-nums">{money(goal)} <span className="text-xs font-normal text-muted-foreground">{CUR}</span></p>
                         </div>
                       </div>
                       <Progress value={goalProgress} className="h-2.5" />
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-muted-foreground">
-                          متبقي: <span className="font-semibold text-foreground tabular-nums">{fmt(Math.max(0, goal - Math.max(0, stats.profit)))}</span> MAD
+                          متبقي: <span className="font-semibold text-foreground tabular-nums">{money(Math.max(0, goal - Math.max(0, stats.profit)))}</span> MAD
                         </span>
                         <span className={cn("font-bold tabular-nums", goalProgress >= 100 ? "text-success" : "text-primary")}>
                           {goalProgress.toFixed(0)}%
@@ -697,17 +697,17 @@ export default function Dashboard() {
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="h-2 w-2 rounded-full bg-success" />
                   <span className="text-muted-foreground">مداخيل</span>
-                  <span className="font-bold text-success">{fmt(chartData.reduce((s, d) => s + d.income, 0))}</span>
+                  <span className="font-bold text-success">{money(chartData.reduce((s, d) => s + d.income, 0))}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="h-2 w-2 rounded-full bg-destructive" />
                   <span className="text-muted-foreground">مصاريف</span>
-                  <span className="font-bold text-destructive">{fmt(chartData.reduce((s, d) => s + d.expense, 0))}</span>
+                  <span className="font-bold text-destructive">{money(chartData.reduce((s, d) => s + d.expense, 0))}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="h-2 w-2 rounded-full bg-primary" />
                   <span className="text-muted-foreground">صافي</span>
-                  <span className="font-bold text-primary">{fmt(chartData.reduce((s, d) => s + d.income - d.expense, 0))}</span>
+                  <span className="font-bold text-primary">{money(chartData.reduce((s, d) => s + d.income - d.expense, 0))}</span>
                 </div>
               </div>
             </div>
@@ -811,7 +811,7 @@ export default function Dashboard() {
                       </Pie>
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Tooltip
-                        formatter={(v: number) => `${fmt(v)} MAD`}
+                        formatter={(v: number) => `${money(v)} ${CUR}`}
                         contentStyle={{
                           background: "hsl(var(--popover))",
                           border: "1px solid hsl(var(--border))",
@@ -824,9 +824,9 @@ export default function Dashboard() {
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center -mt-4">
                     <span className="text-[10px] text-muted-foreground">الربح الصافي</span>
                     <span className={`text-lg font-bold ${stats.profit >= 0 ? "text-success" : "text-destructive"}`}>
-                      {fmt(stats.profit)}
+                      {money(stats.profit)}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">MAD</span>
+                    <span className="text-[10px] text-muted-foreground">{CUR}</span>
                   </div>
                 </div>
               );
@@ -877,9 +877,9 @@ export default function Dashboard() {
                               <div className="rounded-xl border border-border/60 bg-popover/95 backdrop-blur-md p-3 shadow-xl text-xs min-w-[160px]">
                                 <div className="font-bold text-foreground mb-2 pb-1.5 border-b border-border/40">{label}</div>
                                 <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مداخيل</span><span className="font-semibold text-success">{fmt(row.income)}</span></div>
-                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مصاريف</span><span className="font-semibold text-destructive">{fmt(row.expense)}</span></div>
-                                  <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-border/40"><span className="text-muted-foreground">الربح</span><span className={cn("font-bold", row.profit >= 0 ? "text-success" : "text-destructive")}>{fmt(row.profit)}</span></div>
+                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مداخيل</span><span className="font-semibold text-success">{money(row.income)}</span></div>
+                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مصاريف</span><span className="font-semibold text-destructive">{money(row.expense)}</span></div>
+                                  <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-border/40"><span className="text-muted-foreground">الربح</span><span className={cn("font-bold", row.profit >= 0 ? "text-success" : "text-destructive")}>{money(row.profit)}</span></div>
                                 </div>
                               </div>
                             );
@@ -941,7 +941,7 @@ export default function Dashboard() {
                       }`}
                     >
                       {t.type === "income" ? "+" : "−"}
-                      {fmt(Number(t.amount))}
+                      {money(Number(t.amount))}
                     </span>
                   </li>
                 ))}
