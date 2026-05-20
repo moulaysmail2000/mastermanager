@@ -11,7 +11,6 @@ import { Scissors } from "lucide-react";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -24,15 +23,9 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        toast.success("تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("تم تسجيل الدخول بنجاح!");
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("تم تسجيل الدخول بنجاح!");
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ");
     } finally {
@@ -49,7 +42,7 @@ export default function Login() {
           </div>
           <CardTitle className="text-2xl font-bold">CapCut Store Manager</CardTitle>
           <p className="text-muted-foreground text-sm">
-            {isSignUp ? "إنشاء حساب جديد" : "تسجيل الدخول إلى حسابك"}
+            تسجيل الدخول إلى حسابك
           </p>
         </CardHeader>
         <CardContent>
@@ -73,15 +66,9 @@ export default function Login() {
               className="text-right"
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "جاري التحميل..." : isSignUp ? "إنشاء حساب" : "تسجيل الدخول"}
+              {loading ? "جاري التحميل..." : "تسجيل الدخول"}
             </Button>
           </form>
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isSignUp ? "لديك حساب؟ سجّل الدخول" : "ليس لديك حساب؟ أنشئ واحداً"}
-          </button>
         </CardContent>
       </Card>
     </div>
