@@ -157,6 +157,24 @@ export default function Dashboard() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // ===== Currency switch (MAD / USD) =====
+  const CURRENCY_KEY = "dashboard_currency_v1";
+  const RATE_MAD_PER_USD = 10; // 1 USD ≈ 10 MAD (تقريبي)
+  const [currency, setCurrency] = useState<"MAD" | "USD">(() => {
+    if (typeof window === "undefined") return "MAD";
+    const v = localStorage.getItem(CURRENCY_KEY);
+    return v === "USD" ? "USD" : "MAD";
+  });
+  const changeCurrency = (c: "MAD" | "USD") => {
+    setCurrency(c);
+    localStorage.setItem(CURRENCY_KEY, c);
+  };
+  const money = (n: number) => {
+    const v = currency === "USD" ? n / RATE_MAD_PER_USD : n;
+    return new Intl.NumberFormat("ar-MA", { maximumFractionDigits: 2 }).format(v);
+  };
+  const CUR = currency;
+
   const loadAll = async () => {
     setRefreshing(true);
     try {
