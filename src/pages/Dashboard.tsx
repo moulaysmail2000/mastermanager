@@ -340,6 +340,81 @@ export default function Dashboard() {
       <Skeleton className="h-28 w-full" />
     );
 
+  // ===== Smart Alerts =====
+  const alerts = useMemo(() => {
+    const list: { id: string; level: "danger" | "warning" | "info"; text: string; to?: string }[] = [];
+    const now = Date.now();
+    const oldUnpaid = unpaidList.filter((u) => {
+      const created = new Date(u.created_at).getTime();
+      return (now - created) / (1000 * 60 * 60 * 24) > 7;
+    }).length;
+    if (oldUnpaid > 0) {
+      list.push({ id: "old-unpaid", level: "warning", text: `لديك ${oldUnpaid} رقم/أرقام لم تُدفع منذ أكثر من 7 أيام`, to: "/unpaid-numbers" });
+    }
+    if (stats.unpaidCount >= 10) {
+      list.push({ id: "many-unpaid", level: "warning", text: `عدد الأرقام غير المدفوعة مرتفع (${stats.unpaidCount})`, to: "/unpaid-numbers" });
+    }
+    const negativeFriends = friendsList.filter((f) => Number(f.balance) < 0);
+    if (negativeFriends.length > 0) {
+      list.push({ id: "neg-friends", level: "danger", text: `${negativeFriends.length} محفظة صديق برصيد سالب`, to: "/friend-accounts" });
+    }
+    if (stats.totalAccounts > 0 && stats.availabilityRate < 15) {
+      list.push({ id: "low-stock", level: "danger", text: `المخزون منخفض — ${stats.availableAccounts} حساب فقط متاح`, to: "/capcut-accounts" });
+    }
+    if (stats.profit < 0) {
+      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${fmt(stats.profit)} MAD)`, to: "/finance" });
+    }
+    if (stats.totalAccounts === 0) {
+      list.push({ id: "no-accounts", level: "info", text: "لا توجد حسابات CapCut بعد — أضف الأول الآن", to: "/capcut-accounts" });
+    }
+    if (list.length === 0) {
+      list.push({ id: "ok", level: "info", text: "كل شيء يسير على ما يرام — لا توجد تنبيهات حاليًا" });
+    }
+    return list;
+  }, [unpaidList, friendsList, stats]);
+
+  // ===== Monthly Goal =====
+  const GOAL_KEY = "dashboard_monthly_goal_v1";
+  const [goal, setGoal] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const v = Number(localStorage.getItem(GOAL_KEY) || "0");
+    return isFinite(v) && v > 0 ? v : 0;
+  });
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState<string>(String(goal || ""));
+  const saveGoal = () => {
+    const v = Math.max(0, Number(goalDraft) || 0);
+    setGoal(v);
+    localStorage.setItem(GOAL_KEY, String(v));
+    setEditingGoal(false);
+  };
+  const goalProgress = goal > 0 ? Math.min(100, (Math.max(0, stats.profit) / goal) * 100) : 0;
+
+  // ===== Section Order (drag & drop) =====
+  const SECTION_ORDER_KEY = "dashboard_section_order_v2";
+  const DEFAULT_SECTIONS = ["kpis", "alerts", "goal", "charts", "recent"] as const;
+  type SectionId = typeof DEFAULT_SECTIONS[number];
+  const [reorderMode, setReorderMode] = useState(false);
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
+    if (typeof window === "undefined") return [...DEFAULT_SECTIONS];
+    try {
+      const saved = JSON.parse(localStorage.getItem(SECTION_ORDER_KEY) || "null");
+      if (Array.isArray(saved)) {
+        const valid = saved.filter((s: string) => (DEFAULT_SECTIONS as readonly string[]).includes(s)) as SectionId[];
+        const missing = DEFAULT_SECTIONS.filter((s) => !valid.includes(s));
+        return [...valid, ...missing];
+      }
+    } catch { /* ignore */ }
+    return [...DEFAULT_SECTIONS];
+  });
+  const sectionSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const handleSectionDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const next = arrayMove(sectionOrder, sectionOrder.indexOf(active.id as SectionId), sectionOrder.indexOf(over.id as SectionId));
+    setSectionOrder(next);
+    localStorage.setItem(SECTION_ORDER_KEY, JSON.stringify(next));
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
