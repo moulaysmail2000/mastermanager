@@ -440,7 +440,7 @@ export default function Dashboard() {
 
   // ===== Section Order (drag & drop) =====
   const SECTION_ORDER_KEY = "dashboard_section_order_v4";
-  const DEFAULT_SECTIONS = ["kpis", "forecast", "charts", "weekday", "alerts", "goal", "recent"] as const;
+  const DEFAULT_SECTIONS = ["kpis", "charts", "weekday", "alerts", "goal", "recent"] as const;
   type SectionId = typeof DEFAULT_SECTIONS[number];
   const [reorderMode, setReorderMode] = useState(false);
   const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
