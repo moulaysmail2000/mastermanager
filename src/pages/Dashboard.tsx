@@ -805,7 +805,6 @@ export default function Dashboard() {
               </div>
             </Reveal>
           ),
-          recent: (
           forecast: (
             <Reveal show={financeReady} delay={120}>
               <Card className="border-border/50 overflow-hidden">
