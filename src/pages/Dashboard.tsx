@@ -836,52 +836,6 @@ export default function Dashboard() {
               </div>
             </Reveal>
           ),
-          forecast: (
-            <Reveal show={financeReady} delay={120}>
-              <Card className="border-border/50 overflow-hidden">
-                <CardHeader className="flex-row items-center justify-between space-y-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-xl bg-info/15 text-info flex items-center justify-center">
-                      <Zap className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">توقعات نهاية الشهر</CardTitle>
-                      <CardDescription className="text-xs">تقدير مبني على متوسط أداء الأيام الماضية</CardDescription>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="gap-1 text-[10px]">
-                    <CalendarClock className="h-3 w-3" /> يوم {forecast.dayOfMonth} / {forecast.daysInMonth}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-4 space-y-3">
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                    <div className="rounded-xl border border-border/50 bg-success/5 p-2.5 sm:p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">مداخيل متوقعة</p>
-                      <p className="text-base sm:text-xl font-bold text-success tabular-nums">{fmt(forecast.projIncome)}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">متوسط {fmt(forecast.avgIncome)}/يوم</p>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-destructive/5 p-2.5 sm:p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">مصاريف متوقعة</p>
-                      <p className="text-base sm:text-xl font-bold text-destructive tabular-nums">{fmt(forecast.projExpense)}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">متوسط {fmt(forecast.avgExpense)}/يوم</p>
-                    </div>
-                    <div className={cn("rounded-xl border p-2.5 sm:p-3", forecast.projProfit >= 0 ? "border-primary/30 bg-primary/5" : "border-warning/30 bg-warning/5")}>
-                      <p className="text-[10px] text-muted-foreground mb-1">الربح المتوقع</p>
-                      <p className={cn("text-base sm:text-xl font-bold tabular-nums", forecast.projProfit >= 0 ? "text-primary" : "text-warning")}>{fmt(forecast.projProfit)}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{forecast.remaining} يوم متبقي</p>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-muted-foreground">تقدّم الشهر</span>
-                      <span className="font-semibold tabular-nums">{forecast.monthProgress.toFixed(0)}%</span>
-                    </div>
-                    <Progress value={forecast.monthProgress} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ),
           weekday: (
             <Reveal show={financeReady} delay={280}>
               <Card className="border-border/50 overflow-hidden">
