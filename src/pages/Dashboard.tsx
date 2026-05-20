@@ -806,6 +806,114 @@ export default function Dashboard() {
             </Reveal>
           ),
           recent: (
+          forecast: (
+            <Reveal show={financeReady} delay={120}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-info/15 text-info flex items-center justify-center">
+                      <Zap className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">توقعات نهاية الشهر</CardTitle>
+                      <CardDescription className="text-xs">تقدير مبني على متوسط أداء الأيام الماضية</CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <CalendarClock className="h-3 w-3" /> يوم {forecast.dayOfMonth} / {forecast.daysInMonth}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4 space-y-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    <div className="rounded-xl border border-border/50 bg-success/5 p-2.5 sm:p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">مداخيل متوقعة</p>
+                      <p className="text-base sm:text-xl font-bold text-success tabular-nums">{fmt(forecast.projIncome)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">متوسط {fmt(forecast.avgIncome)}/يوم</p>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-destructive/5 p-2.5 sm:p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">مصاريف متوقعة</p>
+                      <p className="text-base sm:text-xl font-bold text-destructive tabular-nums">{fmt(forecast.projExpense)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">متوسط {fmt(forecast.avgExpense)}/يوم</p>
+                    </div>
+                    <div className={cn("rounded-xl border p-2.5 sm:p-3", forecast.projProfit >= 0 ? "border-primary/30 bg-primary/5" : "border-warning/30 bg-warning/5")}>
+                      <p className="text-[10px] text-muted-foreground mb-1">الربح المتوقع</p>
+                      <p className={cn("text-base sm:text-xl font-bold tabular-nums", forecast.projProfit >= 0 ? "text-primary" : "text-warning")}>{fmt(forecast.projProfit)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{forecast.remaining} يوم متبقي</p>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[11px] mb-1.5">
+                      <span className="text-muted-foreground">تقدّم الشهر</span>
+                      <span className="font-semibold tabular-nums">{forecast.monthProgress.toFixed(0)}%</span>
+                    </div>
+                    <Progress value={forecast.monthProgress} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          weekday: (
+            <Reveal show={financeReady} delay={280}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-warning/15 text-warning flex items-center justify-center">
+                      <CalendarDays className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">أفضل أيام الأسبوع</CardTitle>
+                      <CardDescription className="text-xs">متوسط الربح حسب يوم الأسبوع — آخر 8 أسابيع</CardDescription>
+                    </div>
+                  </div>
+                  {bestDay && bestDay.profit > 0 && (
+                    <Badge variant="secondary" className="gap-1 text-[10px]">
+                      <Sparkles className="h-3 w-3" /> الأفضل: {bestDay.day}
+                    </Badge>
+                  )}
+                </CardHeader>
+                <CardContent className="p-2 sm:p-4">
+                  <div className="h-52 sm:h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weekdayData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="g-weekday" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 4" vertical={false} opacity={0.5} />
+                        <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickLine={false} axisLine={false} dy={4} />
+                        <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickLine={false} axisLine={false} width={42} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)} />
+                        <Tooltip
+                          cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            const row = payload[0].payload;
+                            return (
+                              <div className="rounded-xl border border-border/60 bg-popover/95 backdrop-blur-md p-3 shadow-xl text-xs min-w-[160px]">
+                                <div className="font-bold text-foreground mb-2 pb-1.5 border-b border-border/40">{label}</div>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مداخيل</span><span className="font-semibold text-success">{fmt(row.income)}</span></div>
+                                  <div className="flex items-center justify-between gap-4"><span className="text-muted-foreground">مصاريف</span><span className="font-semibold text-destructive">{fmt(row.expense)}</span></div>
+                                  <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-border/40"><span className="text-muted-foreground">الربح</span><span className={cn("font-bold", row.profit >= 0 ? "text-success" : "text-destructive")}>{fmt(row.profit)}</span></div>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="profit" name="ربح" radius={[8, 8, 0, 0]}>
+                          {weekdayData.map((r, i) => (
+                            <Cell key={i} fill={r.profit < 0 ? "hsl(var(--destructive))" : r.day === bestDay?.day && r.profit > 0 ? "hsl(var(--success))" : "url(#g-weekday)"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          recent: (
             <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={350}>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border/50">
