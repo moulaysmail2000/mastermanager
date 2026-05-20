@@ -14,18 +14,31 @@ import {
   CalendarClock,
   Sparkles,
   RefreshCw,
+  AlertTriangle,
+  Bell,
+  Target,
+  Pencil,
+  Check,
+  X,
+  Move,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ConsultDialog } from "@/components/ConsultDialog";
 import DailyStatsBar from "@/components/DailyStatsBar";
 import LiveClock from "@/components/LiveClock";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 import {
   AreaChart,
   Area,
