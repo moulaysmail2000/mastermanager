@@ -14,18 +14,31 @@ import {
   CalendarClock,
   Sparkles,
   RefreshCw,
+  AlertTriangle,
+  Bell,
+  Target,
+  Pencil,
+  Check,
+  X,
+  Move,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ConsultDialog } from "@/components/ConsultDialog";
 import DailyStatsBar from "@/components/DailyStatsBar";
 import LiveClock from "@/components/LiveClock";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 import {
   AreaChart,
   Area,
@@ -327,6 +340,81 @@ export default function Dashboard() {
       <Skeleton className="h-28 w-full" />
     );
 
+  // ===== Smart Alerts =====
+  const alerts = useMemo(() => {
+    const list: { id: string; level: "danger" | "warning" | "info"; text: string; to?: string }[] = [];
+    const now = Date.now();
+    const oldUnpaid = unpaidList.filter((u) => {
+      const created = new Date(u.created_at).getTime();
+      return (now - created) / (1000 * 60 * 60 * 24) > 7;
+    }).length;
+    if (oldUnpaid > 0) {
+      list.push({ id: "old-unpaid", level: "warning", text: `لديك ${oldUnpaid} رقم/أرقام لم تُدفع منذ أكثر من 7 أيام`, to: "/unpaid-numbers" });
+    }
+    if (stats.unpaidCount >= 10) {
+      list.push({ id: "many-unpaid", level: "warning", text: `عدد الأرقام غير المدفوعة مرتفع (${stats.unpaidCount})`, to: "/unpaid-numbers" });
+    }
+    const negativeFriends = friendsList.filter((f) => Number(f.balance) < 0);
+    if (negativeFriends.length > 0) {
+      list.push({ id: "neg-friends", level: "danger", text: `${negativeFriends.length} محفظة صديق برصيد سالب`, to: "/friend-accounts" });
+    }
+    if (stats.totalAccounts > 0 && stats.availabilityRate < 15) {
+      list.push({ id: "low-stock", level: "danger", text: `المخزون منخفض — ${stats.availableAccounts} حساب فقط متاح`, to: "/capcut-accounts" });
+    }
+    if (stats.profit < 0) {
+      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${fmt(stats.profit)} MAD)`, to: "/finance" });
+    }
+    if (stats.totalAccounts === 0) {
+      list.push({ id: "no-accounts", level: "info", text: "لا توجد حسابات CapCut بعد — أضف الأول الآن", to: "/capcut-accounts" });
+    }
+    if (list.length === 0) {
+      list.push({ id: "ok", level: "info", text: "كل شيء يسير على ما يرام — لا توجد تنبيهات حاليًا" });
+    }
+    return list;
+  }, [unpaidList, friendsList, stats]);
+
+  // ===== Monthly Goal =====
+  const GOAL_KEY = "dashboard_monthly_goal_v1";
+  const [goal, setGoal] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const v = Number(localStorage.getItem(GOAL_KEY) || "0");
+    return isFinite(v) && v > 0 ? v : 0;
+  });
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState<string>(String(goal || ""));
+  const saveGoal = () => {
+    const v = Math.max(0, Number(goalDraft) || 0);
+    setGoal(v);
+    localStorage.setItem(GOAL_KEY, String(v));
+    setEditingGoal(false);
+  };
+  const goalProgress = goal > 0 ? Math.min(100, (Math.max(0, stats.profit) / goal) * 100) : 0;
+
+  // ===== Section Order (drag & drop) =====
+  const SECTION_ORDER_KEY = "dashboard_section_order_v2";
+  const DEFAULT_SECTIONS = ["kpis", "alerts", "goal", "charts", "recent"] as const;
+  type SectionId = typeof DEFAULT_SECTIONS[number];
+  const [reorderMode, setReorderMode] = useState(false);
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
+    if (typeof window === "undefined") return [...DEFAULT_SECTIONS];
+    try {
+      const saved = JSON.parse(localStorage.getItem(SECTION_ORDER_KEY) || "null");
+      if (Array.isArray(saved)) {
+        const valid = saved.filter((s: string) => (DEFAULT_SECTIONS as readonly string[]).includes(s)) as SectionId[];
+        const missing = DEFAULT_SECTIONS.filter((s) => !valid.includes(s));
+        return [...valid, ...missing];
+      }
+    } catch { /* ignore */ }
+    return [...DEFAULT_SECTIONS];
+  });
+  const sectionSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const handleSectionDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const next = arrayMove(sectionOrder, sectionOrder.indexOf(active.id as SectionId), sectionOrder.indexOf(over.id as SectionId));
+    setSectionOrder(next);
+    localStorage.setItem(SECTION_ORDER_KEY, JSON.stringify(next));
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -366,6 +454,16 @@ export default function Dashboard() {
               >
                 <MonitorSmartphone className="h-4 w-4" /> الحسابات
               </Link>
+              <Button
+                size="sm"
+                variant={reorderMode ? "default" : "outline"}
+                onClick={() => setReorderMode((v) => !v)}
+                className="gap-1.5"
+                title="ترتيب أقسام اللوحة"
+              >
+                <Move className="h-3.5 w-3.5" />
+                <span className="text-xs">{reorderMode ? "تم" : "ترتيب"}</span>
+              </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2 justify-end">
               <div className="hidden sm:block">
@@ -378,24 +476,144 @@ export default function Dashboard() {
       </div>
 
       {/* KPIs */}
-      <Reveal show={financeReady && capcutReady} delay={50}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            <StatCard key="inc" title="مداخيل الشهر" value={fmt(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
-            <StatCard key="exp" title="مصاريف الشهر" value={fmt(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
-            <StatCard key="prof" title="الربح الصافي" value={fmt(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
-            <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
-          ].map((card, i) => (
-            <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
-              {card}
-            </div>
-          ))}
-        </div>
-      </Reveal>
-
-      {/* Charts */}
-      <Reveal show={financeReady && capcutReady} delay={250}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {(() => {
+        const sectionContent: Record<SectionId, React.ReactNode> = {
+          kpis: (
+            <Reveal show={financeReady && capcutReady} delay={50}>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {[
+                  <StatCard key="inc" title="مداخيل الشهر" value={fmt(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
+                  <StatCard key="exp" title="مصاريف الشهر" value={fmt(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
+                  <StatCard key="prof" title="الربح الصافي" value={fmt(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
+                  <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
+                ].map((card, i) => (
+                  <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
+                    {card}
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          ),
+          alerts: (
+            <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={100}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-warning/15 text-warning flex items-center justify-center">
+                      <Bell className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">التنبيهات الذكية</CardTitle>
+                      <CardDescription className="text-xs">أهم ما يحتاج انتباهك الآن</CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">{alerts.length}</Badge>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4">
+                  <ul className="space-y-2">
+                    {alerts.map((a) => {
+                      const tone =
+                        a.level === "danger" ? "bg-destructive/10 border-destructive/30 text-destructive" :
+                        a.level === "warning" ? "bg-warning/10 border-warning/30 text-warning" :
+                        "bg-info/10 border-info/30 text-info";
+                      const Icon = a.level === "info" ? Sparkles : AlertTriangle;
+                      const inner = (
+                        <div className={cn("flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors", tone)}>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="text-xs sm:text-sm font-medium text-foreground flex-1">{a.text}</span>
+                          {a.to && <ArrowUpRight className="h-4 w-4 shrink-0 opacity-70" />}
+                        </div>
+                      );
+                      return (
+                        <li key={a.id}>
+                          {a.to ? <Link to={a.to as any}>{inner}</Link> : inner}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          goal: (
+            <Reveal show={financeReady} delay={150}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+                      <Target className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">هدف الشهر</CardTitle>
+                      <CardDescription className="text-xs">تتبّع وصولك لهدف الربح الصافي</CardDescription>
+                    </div>
+                  </div>
+                  {!editingGoal ? (
+                    <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={() => { setGoalDraft(String(goal || "")); setEditingGoal(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="text-xs">تعديل</span>
+                    </Button>
+                  ) : null}
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4 space-y-3">
+                  {editingGoal ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        value={goalDraft}
+                        onChange={(e) => setGoalDraft(e.target.value)}
+                        placeholder="مثلاً 5000"
+                        className="h-9"
+                        autoFocus
+                      />
+                      <span className="text-xs text-muted-foreground">MAD</span>
+                      <Button size="sm" className="h-9 gap-1" onClick={saveGoal}>
+                        <Check className="h-3.5 w-3.5" /> حفظ
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingGoal(false)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : goal > 0 ? (
+                    <>
+                      <div className="flex items-end justify-between gap-2">
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">المُنجز</p>
+                          <p className={cn("text-2xl font-bold tabular-nums", stats.profit >= 0 ? "text-success" : "text-destructive")}>
+                            {fmt(Math.max(0, stats.profit))} <span className="text-xs font-normal text-muted-foreground">MAD</span>
+                          </p>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[11px] text-muted-foreground">الهدف</p>
+                          <p className="text-lg font-semibold tabular-nums">{fmt(goal)} <span className="text-xs font-normal text-muted-foreground">MAD</span></p>
+                        </div>
+                      </div>
+                      <Progress value={goalProgress} className="h-2.5" />
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground">
+                          متبقي: <span className="font-semibold text-foreground tabular-nums">{fmt(Math.max(0, goal - Math.max(0, stats.profit)))}</span> MAD
+                        </span>
+                        <span className={cn("font-bold tabular-nums", goalProgress >= 100 ? "text-success" : "text-primary")}>
+                          {goalProgress.toFixed(0)}%
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-3">
+                      <p className="text-sm text-muted-foreground mb-2">لم تحدد هدفًا بعد لهذا الشهر</p>
+                      <Button size="sm" onClick={() => setEditingGoal(true)} className="gap-1.5">
+                        <Target className="h-3.5 w-3.5" /> حدّد الهدف
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          charts: (
+            <Reveal show={financeReady && capcutReady} delay={250}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border/50 overflow-hidden">
           <CardHeader className="flex-row items-start justify-between space-y-0 gap-3 flex-wrap">
             <div>
@@ -541,12 +759,12 @@ export default function Dashboard() {
             })()}
           </CardContent>
         </Card>
-        </div>
-      </Reveal>
-
-      {/* Recent + Health */}
-      <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={350}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              </div>
+            </Reveal>
+          ),
+          recent: (
+            <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={350}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border/50">
           <CardHeader>
             <CardTitle className="text-base">أحدث المعاملات</CardTitle>
@@ -643,8 +861,49 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        </div>
-      </Reveal>
+              </div>
+            </Reveal>
+          ),
+        };
+
+        return (
+          <DndContext sensors={sectionSensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+            <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4 sm:space-y-6">
+                {sectionOrder.map((id) => (
+                  <SortableSection key={id} id={id} reorderMode={reorderMode}>
+                    {sectionContent[id]}
+                  </SortableSection>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        );
+      })()}
+    </div>
+  );
+}
+
+function SortableSection({ id, reorderMode, children }: { id: string; reorderMode: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !reorderMode });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={cn("relative", reorderMode && "ring-2 ring-primary/30 rounded-2xl")}>
+      {reorderMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="absolute -top-2 -right-2 z-10 h-8 w-8 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
+          title="اسحب لإعادة الترتيب"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+      {children}
     </div>
   );
 }
