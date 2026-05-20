@@ -454,6 +454,16 @@ export default function Dashboard() {
               >
                 <MonitorSmartphone className="h-4 w-4" /> الحسابات
               </Link>
+              <Button
+                size="sm"
+                variant={reorderMode ? "default" : "outline"}
+                onClick={() => setReorderMode((v) => !v)}
+                className="gap-1.5"
+                title="ترتيب أقسام اللوحة"
+              >
+                <Move className="h-3.5 w-3.5" />
+                <span className="text-xs">{reorderMode ? "تم" : "ترتيب"}</span>
+              </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2 justify-end">
               <div className="hidden sm:block">
