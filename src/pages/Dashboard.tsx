@@ -324,6 +324,45 @@ export default function Dashboard() {
 
   const recentTxs = txsList.slice(0, 6);
 
+  // ===== Weekday performance (last 8 weeks) =====
+  const weekdayData = useMemo(() => {
+    const names = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const rows = names.map((n) => ({ day: n, income: 0, expense: 0, profit: 0, count: 0 }));
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 56); // ~8 weeks
+    for (const t of txsList) {
+      const d = new Date(t.transaction_date);
+      if (d < cutoff) continue;
+      const idx = d.getDay();
+      const amt = Number(t.amount) || 0;
+      if (t.type === "income") rows[idx].income += amt;
+      else rows[idx].expense += amt;
+    }
+    rows.forEach((r) => { r.profit = r.income - r.expense; r.count = 1; });
+    return rows;
+  }, [txsList]);
+
+  const bestDay = useMemo(() => {
+    let best = weekdayData[0];
+    for (const r of weekdayData) if (r.profit > best.profit) best = r;
+    return best;
+  }, [weekdayData]);
+
+  // ===== Month-end forecast =====
+  const forecast = useMemo(() => {
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remaining = daysInMonth - dayOfMonth;
+    const avgIncome = dayOfMonth > 0 ? stats.income / dayOfMonth : 0;
+    const avgExpense = dayOfMonth > 0 ? stats.expense / dayOfMonth : 0;
+    const projIncome = stats.income + avgIncome * remaining;
+    const projExpense = stats.expense + avgExpense * remaining;
+    const projProfit = projIncome - projExpense;
+    const monthProgress = (dayOfMonth / daysInMonth) * 100;
+    return { dayOfMonth, daysInMonth, remaining, avgIncome, avgExpense, projIncome, projExpense, projProfit, monthProgress };
+  }, [stats.income, stats.expense]);
+
   // Section ready states for progressive reveal
   const financeReady = txs !== null;
   const capcutReady = capcut !== null;
