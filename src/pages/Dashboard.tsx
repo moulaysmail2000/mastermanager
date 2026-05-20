@@ -367,20 +367,6 @@ export default function Dashboard() {
     return best;
   }, [weekdayData]);
 
-  // ===== Month-end forecast =====
-  const forecast = useMemo(() => {
-    const now = new Date();
-    const dayOfMonth = now.getDate();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const remaining = daysInMonth - dayOfMonth;
-    const avgIncome = dayOfMonth > 0 ? stats.income / dayOfMonth : 0;
-    const avgExpense = dayOfMonth > 0 ? stats.expense / dayOfMonth : 0;
-    const projIncome = stats.income + avgIncome * remaining;
-    const projExpense = stats.expense + avgExpense * remaining;
-    const projProfit = projIncome - projExpense;
-    const monthProgress = (dayOfMonth / daysInMonth) * 100;
-    return { dayOfMonth, daysInMonth, remaining, avgIncome, avgExpense, projIncome, projExpense, projProfit, monthProgress };
-  }, [stats.income, stats.expense]);
 
   // Section ready states for progressive reveal
   const financeReady = txs !== null;
