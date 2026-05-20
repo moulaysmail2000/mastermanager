@@ -22,6 +22,8 @@ import {
   X,
   Move,
   GripVertical,
+  CalendarDays,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,6 +53,8 @@ import {
   Pie,
   Cell,
   Legend,
+  BarChart,
+  Bar,
 } from "recharts";
 
 type Tx = {
