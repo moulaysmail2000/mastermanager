@@ -526,6 +526,32 @@ export default function Dashboard() {
                 <Move className="h-3.5 w-3.5" />
                 <span className="text-xs">{reorderMode ? "تم" : "ترتيب"}</span>
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1.5" title="تغيير العملة">
+                    <Coins className="h-3.5 w-3.5" />
+                    <span className="text-xs font-semibold">{CUR}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel className="text-xs">اختر العملة</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => changeCurrency("MAD")} className="gap-2 text-xs cursor-pointer">
+                    <span className="flex-1">الدرهم المغربي</span>
+                    <span className="font-bold">MAD</span>
+                    {currency === "MAD" && <Check className="h-3.5 w-3.5" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeCurrency("USD")} className="gap-2 text-xs cursor-pointer">
+                    <span className="flex-1">الدولار الأمريكي</span>
+                    <span className="font-bold">USD</span>
+                    {currency === "USD" && <Check className="h-3.5 w-3.5" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                    سعر التحويل: 1 USD ≈ {RATE_MAD_PER_USD} MAD
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="flex flex-wrap items-center gap-2 justify-end">
               <div className="hidden sm:block">
