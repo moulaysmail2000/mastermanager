@@ -410,7 +410,7 @@ export default function Dashboard() {
       list.push({ id: "low-stock", level: "danger", text: `المخزون منخفض — ${stats.availableAccounts} حساب فقط متاح`, to: "/capcut-accounts" });
     }
     if (stats.profit < 0) {
-      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${money(stats.profit)} MAD)`, to: "/finance" });
+      list.push({ id: "neg-profit", level: "danger", text: `الربح الصافي لهذا الشهر سالب (${money(stats.profit)} ${CUR})`, to: "/finance" });
     }
     if (stats.totalAccounts === 0) {
       list.push({ id: "no-accounts", level: "info", text: "لا توجد حسابات CapCut بعد — أضف الأول الآن", to: "/capcut-accounts" });
@@ -556,9 +556,9 @@ export default function Dashboard() {
             <Reveal show={financeReady && capcutReady} delay={50}>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  <StatCard key="inc" title="مداخيل الشهر" value={money(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
-                  <StatCard key="exp" title="مصاريف الشهر" value={money(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
-                  <StatCard key="prof" title="الربح الصافي" value={money(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
+                  <StatCard key="inc" title="مداخيل الشهر" value={money(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint={CUR} />,
+                  <StatCard key="exp" title="مصاريف الشهر" value={money(stats.expense)} icon={TrendingDown} tone="destructive" hint={CUR} />,
+                  <StatCard key="prof" title="الربح الصافي" value={money(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint={CUR} />,
                   <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
                 ].map((card, i) => (
                   <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
@@ -666,7 +666,7 @@ export default function Dashboard() {
                       <Progress value={goalProgress} className="h-2.5" />
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-muted-foreground">
-                          متبقي: <span className="font-semibold text-foreground tabular-nums">{money(Math.max(0, goal - Math.max(0, stats.profit)))}</span> MAD
+                          متبقي: <span className="font-semibold text-foreground tabular-nums">{money(Math.max(0, goal - Math.max(0, stats.profit)))}</span> {CUR}
                         </span>
                         <span className={cn("font-bold tabular-nums", goalProgress >= 100 ? "text-success" : "text-primary")}>
                           {goalProgress.toFixed(0)}%
