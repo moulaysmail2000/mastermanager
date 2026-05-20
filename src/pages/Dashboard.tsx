@@ -476,24 +476,144 @@ export default function Dashboard() {
       </div>
 
       {/* KPIs */}
-      <Reveal show={financeReady && capcutReady} delay={50}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            <StatCard key="inc" title="مداخيل الشهر" value={fmt(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
-            <StatCard key="exp" title="مصاريف الشهر" value={fmt(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
-            <StatCard key="prof" title="الربح الصافي" value={fmt(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
-            <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
-          ].map((card, i) => (
-            <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
-              {card}
-            </div>
-          ))}
-        </div>
-      </Reveal>
-
-      {/* Charts */}
-      <Reveal show={financeReady && capcutReady} delay={250}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {(() => {
+        const sectionContent: Record<SectionId, React.ReactNode> = {
+          kpis: (
+            <Reveal show={financeReady && capcutReady} delay={50}>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {[
+                  <StatCard key="inc" title="مداخيل الشهر" value={fmt(stats.income)} icon={TrendingUp} tone="success" delta={{ value: stats.incomeDelta, positive: stats.incomeDelta >= 0 }} hint="MAD" />,
+                  <StatCard key="exp" title="مصاريف الشهر" value={fmt(stats.expense)} icon={TrendingDown} tone="destructive" hint="MAD" />,
+                  <StatCard key="prof" title="الربح الصافي" value={fmt(stats.profit)} icon={Wallet} tone={stats.profit >= 0 ? "primary" : "warning"} delta={{ value: stats.profitDelta, positive: stats.profit >= 0 }} hint="MAD" />,
+                  <StatCard key="cc" title="حسابات CapCut" value={String(stats.totalAccounts)} icon={MonitorSmartphone} tone="primary" hint={`${stats.availableAccounts} متاح · ${stats.soldAccounts} مباع`} />,
+                ].map((card, i) => (
+                  <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
+                    {card}
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          ),
+          alerts: (
+            <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={100}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-warning/15 text-warning flex items-center justify-center">
+                      <Bell className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">التنبيهات الذكية</CardTitle>
+                      <CardDescription className="text-xs">أهم ما يحتاج انتباهك الآن</CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">{alerts.length}</Badge>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4">
+                  <ul className="space-y-2">
+                    {alerts.map((a) => {
+                      const tone =
+                        a.level === "danger" ? "bg-destructive/10 border-destructive/30 text-destructive" :
+                        a.level === "warning" ? "bg-warning/10 border-warning/30 text-warning" :
+                        "bg-info/10 border-info/30 text-info";
+                      const Icon = a.level === "info" ? Sparkles : AlertTriangle;
+                      const inner = (
+                        <div className={cn("flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors", tone)}>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="text-xs sm:text-sm font-medium text-foreground flex-1">{a.text}</span>
+                          {a.to && <ArrowUpRight className="h-4 w-4 shrink-0 opacity-70" />}
+                        </div>
+                      );
+                      return (
+                        <li key={a.id}>
+                          {a.to ? <Link to={a.to as any}>{inner}</Link> : inner}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          goal: (
+            <Reveal show={financeReady} delay={150}>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+                      <Target className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">هدف الشهر</CardTitle>
+                      <CardDescription className="text-xs">تتبّع وصولك لهدف الربح الصافي</CardDescription>
+                    </div>
+                  </div>
+                  {!editingGoal ? (
+                    <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={() => { setGoalDraft(String(goal || "")); setEditingGoal(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="text-xs">تعديل</span>
+                    </Button>
+                  ) : null}
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4 space-y-3">
+                  {editingGoal ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        value={goalDraft}
+                        onChange={(e) => setGoalDraft(e.target.value)}
+                        placeholder="مثلاً 5000"
+                        className="h-9"
+                        autoFocus
+                      />
+                      <span className="text-xs text-muted-foreground">MAD</span>
+                      <Button size="sm" className="h-9 gap-1" onClick={saveGoal}>
+                        <Check className="h-3.5 w-3.5" /> حفظ
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingGoal(false)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : goal > 0 ? (
+                    <>
+                      <div className="flex items-end justify-between gap-2">
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">المُنجز</p>
+                          <p className={cn("text-2xl font-bold tabular-nums", stats.profit >= 0 ? "text-success" : "text-destructive")}>
+                            {fmt(Math.max(0, stats.profit))} <span className="text-xs font-normal text-muted-foreground">MAD</span>
+                          </p>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[11px] text-muted-foreground">الهدف</p>
+                          <p className="text-lg font-semibold tabular-nums">{fmt(goal)} <span className="text-xs font-normal text-muted-foreground">MAD</span></p>
+                        </div>
+                      </div>
+                      <Progress value={goalProgress} className="h-2.5" />
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground">
+                          متبقي: <span className="font-semibold text-foreground tabular-nums">{fmt(Math.max(0, goal - Math.max(0, stats.profit)))}</span> MAD
+                        </span>
+                        <span className={cn("font-bold tabular-nums", goalProgress >= 100 ? "text-success" : "text-primary")}>
+                          {goalProgress.toFixed(0)}%
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-3">
+                      <p className="text-sm text-muted-foreground mb-2">لم تحدد هدفًا بعد لهذا الشهر</p>
+                      <Button size="sm" onClick={() => setEditingGoal(true)} className="gap-1.5">
+                        <Target className="h-3.5 w-3.5" /> حدّد الهدف
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Reveal>
+          ),
+          charts: (
+            <Reveal show={financeReady && capcutReady} delay={250}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border/50 overflow-hidden">
           <CardHeader className="flex-row items-start justify-between space-y-0 gap-3 flex-wrap">
             <div>
@@ -639,12 +759,12 @@ export default function Dashboard() {
             })()}
           </CardContent>
         </Card>
-        </div>
-      </Reveal>
-
-      {/* Recent + Health */}
-      <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={350}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              </div>
+            </Reveal>
+          ),
+          recent: (
+            <Reveal show={financeReady && capcutReady && unpaidReady && friendsReady} delay={350}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border/50">
           <CardHeader>
             <CardTitle className="text-base">أحدث المعاملات</CardTitle>
@@ -741,8 +861,49 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        </div>
-      </Reveal>
+              </div>
+            </Reveal>
+          ),
+        };
+
+        return (
+          <DndContext sensors={sectionSensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+            <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4 sm:space-y-6">
+                {sectionOrder.map((id) => (
+                  <SortableSection key={id} id={id} reorderMode={reorderMode}>
+                    {sectionContent[id]}
+                  </SortableSection>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        );
+      })()}
+    </div>
+  );
+}
+
+function SortableSection({ id, reorderMode, children }: { id: string; reorderMode: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !reorderMode });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={cn("relative", reorderMode && "ring-2 ring-primary/30 rounded-2xl")}>
+      {reorderMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="absolute -top-2 -right-2 z-10 h-8 w-8 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
+          title="اسحب لإعادة الترتيب"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+      {children}
     </div>
   );
 }
