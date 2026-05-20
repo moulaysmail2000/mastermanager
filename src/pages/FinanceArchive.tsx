@@ -118,8 +118,17 @@ export default function FinanceArchive() {
           csv += headers.join(",") + "\n";
           for (const row of rows) {
             csv += headers.map(h => {
-              const val = String(row[h] ?? "").replace(/"/g, '""');
-              return val.includes(",") || val.includes("\n") ? `"${val}"` : val;
+              const raw = row[h];
+              // الكائنات والمصفوفات تُسلسل JSON حتى لا تخرج [object Object]
+              const str =
+                raw === null || raw === undefined
+                  ? ""
+                  : typeof raw === "object"
+                  ? JSON.stringify(raw)
+                  : String(raw);
+              const val = str.replace(/"/g, '""');
+              // أي حرف خاص (فاصلة، سطر جديد، CR، علامة اقتباس) يستوجب التغليف
+              return /[",\n\r]/.test(str) ? `"${val}"` : val;
             }).join(",") + "\n";
           }
         } else {
