@@ -12,6 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
   const { session } = useAuth();
 
@@ -30,6 +31,25 @@ export default function Login() {
       toast.error(error.message || "حدث خطأ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast.error("الرجاء إدخال البريد الإلكتروني أولاً");
+      return;
+    }
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("تم إرسال رابط استرداد كلمة المرور إلى بريدك الإلكتروني");
+    } catch (error: any) {
+      toast.error(error.message || "تعذر إرسال رابط الاسترداد");
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -67,6 +87,15 @@ export default function Login() {
             />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "جاري التحميل..." : "تسجيل الدخول"}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={handleResetPassword}
+              disabled={resetting}
+            >
+              {resetting ? "جاري الإرسال..." : "نسيت كلمة المرور؟"}
             </Button>
           </form>
         </CardContent>
