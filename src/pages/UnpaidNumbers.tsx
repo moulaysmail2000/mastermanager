@@ -121,6 +121,27 @@ export default function UnpaidNumbers() {
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
 
+  // Edit expiry state
+  const [editExpiry, setEditExpiry] = useState<any | null>(null);
+  const [editPhone, setEditPhone] = useState("");
+  const [editStart, setEditStart] = useState<Date>(new Date());
+  const [editEnd, setEditEnd] = useState<Date>(new Date());
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
+
+  const openEditExpiry = (item: any) => {
+    setEditExpiry(item);
+    setEditPhone(item.phone_number || "");
+    setEditStart(new Date(item.start_date));
+    setEditEnd(new Date(item.expiry_date));
+    setEditEmail(item.account_email || "");
+    setEditPassword(item.account_password || "");
+    setEditNotes(item.notes || "");
+    setShowEditPassword(false);
+  };
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
