@@ -309,15 +309,6 @@ export default function UnpaidNumbers() {
     onError: () => toast.error("فشل الحفظ"),
   });
 
-  const _unusedDeleteExpiry = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("expiry_dates").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["expiry_dates"] }); toast.success("تم الحذف"); },
-    onError: () => toast.error("فشل الحذف"),
-  });
-
   const reorderUnpaidMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(ids.map((id, idx) => supabase.from("unpaid_numbers").update({ sort_order: idx }).eq("id", id)));
