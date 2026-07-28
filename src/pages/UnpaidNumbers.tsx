@@ -107,6 +107,11 @@ export default function UnpaidNumbers() {
   const [filterStatus, setFilterStatus] = useState<StatusKey | "all">("all");
   const [tabsOrder, setTabsOrder] = useState<string[]>(() => {
     try {
+      if (localStorage.getItem("unpaid_tabs_order_v2") !== "1") {
+        localStorage.removeItem("unpaid_tabs_order");
+        localStorage.setItem("unpaid_tabs_order_v2", "1");
+        return ["expiry", "classification"];
+      }
       const saved = localStorage.getItem("unpaid_tabs_order");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -115,7 +120,7 @@ export default function UnpaidNumbers() {
     } catch {}
     return ["expiry", "classification"];
   });
-  const [activeTab, setActiveTab] = useState(tabsOrder[0]);
+  const [activeTab, setActiveTab] = useState("expiry");
   const [reorderMode, setReorderMode] = useState(false);
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
