@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw, Search, X } from "lucide-react";
+import { Plus, Copy, Trash2, PhoneOff, CalendarClock, Tags, CalendarIcon, Camera, Loader2, ClipboardPaste, XCircle, Hourglass, RefreshCw, AlertTriangle, CheckCircle2, RotateCcw, Search, X, Pencil, Mail, KeyRound, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
@@ -120,6 +120,27 @@ export default function UnpaidNumbers() {
   const [orderedUnpaidIds, setOrderedUnpaidIds] = useState<string[] | null>(null);
   const [orderedExpiryIds, setOrderedExpiryIds] = useState<string[] | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: StatusKey; phone: string } | null>(null);
+
+  // Edit expiry state
+  const [editExpiry, setEditExpiry] = useState<any | null>(null);
+  const [editPhone, setEditPhone] = useState("");
+  const [editStart, setEditStart] = useState<Date>(new Date());
+  const [editEnd, setEditEnd] = useState<Date>(new Date());
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
+
+  const openEditExpiry = (item: any) => {
+    setEditExpiry(item);
+    setEditPhone(item.phone_number || "");
+    setEditStart(new Date(item.start_date));
+    setEditEnd(new Date(item.expiry_date));
+    setEditEmail(item.account_email || "");
+    setEditPassword(item.account_password || "");
+    setEditNotes(item.notes || "");
+    setShowEditPassword(false);
+  };
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -272,6 +293,20 @@ export default function UnpaidNumbers() {
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["expiry_dates"] }); toast.success("تم الحذف"); },
     onError: () => toast.error("فشل الحذف"),
+  });
+
+  const updateExpiryMutation = useMutation({
+    mutationFn: async (payload: { id: string; phone_number: string; start_date: string; expiry_date: string; account_email: string; account_password: string; notes: string }) => {
+      const { id, ...rest } = payload;
+      const { error } = await supabase.from("expiry_dates").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expiry_dates"] });
+      setEditExpiry(null);
+      toast.success("تم حفظ التعديلات");
+    },
+    onError: () => toast.error("فشل الحفظ"),
   });
 
   const reorderUnpaidMutation = useMutation({
@@ -728,6 +763,15 @@ export default function UnpaidNumbers() {
                           </span>
                           <span className={cn("font-semibold text-sm truncate", color.text)} dir="ltr">{item.phone_number}</span>
                         </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          title="تعديل"
+                          onClick={() => openEditExpiry(item)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
@@ -753,6 +797,32 @@ export default function UnpaidNumbers() {
                         </span>
                         {item.notes && <span className="sm:hidden truncate max-w-[100px]">{item.notes}</span>}
                       </div>
+                      {(item.account_email || item.account_password) && (
+                        <div className="flex items-center gap-2 flex-wrap justify-end pr-3" dir="ltr">
+                          {item.account_email && (
+                            <button
+                              type="button"
+                              onClick={() => copy(item.account_email)}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground max-w-[180px]"
+                              title="نسخ الإيميل"
+                            >
+                              <Mail className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{item.account_email}</span>
+                            </button>
+                          )}
+                          {item.account_password && (
+                            <button
+                              type="button"
+                              onClick={() => copy(item.account_password)}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground max-w-[140px]"
+                              title="نسخ الباسورد"
+                            >
+                              <KeyRound className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{item.account_password}</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                           </CardContent>
                         </Card>
                       </SortableRow>
@@ -764,6 +834,125 @@ export default function UnpaidNumbers() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit expiry dialog */}
+      <Dialog open={!!editExpiry} onOpenChange={(o) => { if (!o) setEditExpiry(null); }}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تعديل الرقم والاشتراك</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">رقم الهاتف</label>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} dir="ltr" className="h-9 text-sm" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground">تاريخ البداية</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 ml-1" />
+                      {format(editStart, "yyyy/MM/dd")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editStart} onSelect={(d) => d && setEditStart(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground">تاريخ الانتهاء</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 ml-1" />
+                      {format(editEnd, "yyyy/MM/dd")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editEnd} onSelect={(d) => d && setEditEnd(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">تجديد سريع (من اليوم)</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[{ l: "شهر", m: 1 }, { l: "3 أشهر", m: 3 }, { l: "6 أشهر", m: 6 }, { l: "سنة", m: 12 }].map((o) => (
+                  <button
+                    key={o.m}
+                    type="button"
+                    onClick={() => { const s = new Date(); setEditStart(s); setEditEnd(addMonths(s, o.m)); }}
+                    className="px-2.5 py-1 rounded-lg border border-border/50 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  >
+                    {o.l}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setEditEnd(addMonths(editEnd, 1))}
+                  className="px-2.5 py-1 rounded-lg border border-border/50 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                  + شهر على الانتهاء
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">الإيميل المسلَّم</label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} dir="ltr" placeholder="email@example.com" className="h-9 text-sm" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">الباسورد</label>
+              <div className="relative">
+                <Input
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  dir="ltr"
+                  type={showEditPassword ? "text" : "password"}
+                  placeholder="••••••"
+                  className="h-9 text-sm pl-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditPassword((v) => !v)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">ملاحظات</label>
+              <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="h-9 text-sm" />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button size="sm" variant="ghost" onClick={() => setEditExpiry(null)}>إلغاء</Button>
+              <Button
+                size="sm"
+                disabled={!editPhone.trim() || updateExpiryMutation.isPending}
+                onClick={() => editExpiry && updateExpiryMutation.mutate({
+                  id: editExpiry.id,
+                  phone_number: editPhone.trim(),
+                  start_date: format(editStart, "yyyy-MM-dd"),
+                  expiry_date: format(editEnd, "yyyy-MM-dd"),
+                  account_email: editEmail.trim(),
+                  account_password: editPassword.trim(),
+                  notes: editNotes.trim(),
+                })}
+              >
+                حفظ
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Camera capture input (kept hidden for any other triggers) */}
       <input
