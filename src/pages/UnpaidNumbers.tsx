@@ -835,6 +835,125 @@ export default function UnpaidNumbers() {
         </TabsContent>
       </Tabs>
 
+      {/* Edit expiry dialog */}
+      <Dialog open={!!editExpiry} onOpenChange={(o) => { if (!o) setEditExpiry(null); }}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تعديل الرقم والاشتراك</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">رقم الهاتف</label>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} dir="ltr" className="h-9 text-sm" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground">تاريخ البداية</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 ml-1" />
+                      {format(editStart, "yyyy/MM/dd")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editStart} onSelect={(d) => d && setEditStart(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground">تاريخ الانتهاء</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 ml-1" />
+                      {format(editEnd, "yyyy/MM/dd")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editEnd} onSelect={(d) => d && setEditEnd(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">تجديد سريع (من اليوم)</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[{ l: "شهر", m: 1 }, { l: "3 أشهر", m: 3 }, { l: "6 أشهر", m: 6 }, { l: "سنة", m: 12 }].map((o) => (
+                  <button
+                    key={o.m}
+                    type="button"
+                    onClick={() => { const s = new Date(); setEditStart(s); setEditEnd(addMonths(s, o.m)); }}
+                    className="px-2.5 py-1 rounded-lg border border-border/50 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  >
+                    {o.l}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setEditEnd(addMonths(editEnd, 1))}
+                  className="px-2.5 py-1 rounded-lg border border-border/50 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                  + شهر على الانتهاء
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">الإيميل المسلَّم</label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} dir="ltr" placeholder="email@example.com" className="h-9 text-sm" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">الباسورد</label>
+              <div className="relative">
+                <Input
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  dir="ltr"
+                  type={showEditPassword ? "text" : "password"}
+                  placeholder="••••••"
+                  className="h-9 text-sm pl-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditPassword((v) => !v)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground">ملاحظات</label>
+              <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="h-9 text-sm" />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button size="sm" variant="ghost" onClick={() => setEditExpiry(null)}>إلغاء</Button>
+              <Button
+                size="sm"
+                disabled={!editPhone.trim() || updateExpiryMutation.isPending}
+                onClick={() => editExpiry && updateExpiryMutation.mutate({
+                  id: editExpiry.id,
+                  phone_number: editPhone.trim(),
+                  start_date: format(editStart, "yyyy-MM-dd"),
+                  expiry_date: format(editEnd, "yyyy-MM-dd"),
+                  account_email: editEmail.trim(),
+                  account_password: editPassword.trim(),
+                  notes: editNotes.trim(),
+                })}
+              >
+                حفظ
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Camera capture input (kept hidden for any other triggers) */}
       <input
         ref={fileInputRef}
