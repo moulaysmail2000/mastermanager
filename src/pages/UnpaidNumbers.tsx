@@ -763,6 +763,15 @@ export default function UnpaidNumbers() {
                           </span>
                           <span className={cn("font-semibold text-sm truncate", color.text)} dir="ltr">{item.phone_number}</span>
                         </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          title="تعديل"
+                          onClick={() => openEditExpiry(item)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
@@ -788,6 +797,32 @@ export default function UnpaidNumbers() {
                         </span>
                         {item.notes && <span className="sm:hidden truncate max-w-[100px]">{item.notes}</span>}
                       </div>
+                      {(item.account_email || item.account_password) && (
+                        <div className="flex items-center gap-2 flex-wrap justify-end pr-3" dir="ltr">
+                          {item.account_email && (
+                            <button
+                              type="button"
+                              onClick={() => copy(item.account_email)}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground max-w-[180px]"
+                              title="نسخ الإيميل"
+                            >
+                              <Mail className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{item.account_email}</span>
+                            </button>
+                          )}
+                          {item.account_password && (
+                            <button
+                              type="button"
+                              onClick={() => copy(item.account_password)}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground max-w-[140px]"
+                              title="نسخ الباسورد"
+                            >
+                              <KeyRound className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{item.account_password}</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                           </CardContent>
                         </Card>
                       </SortableRow>
