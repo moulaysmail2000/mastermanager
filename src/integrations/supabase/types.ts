@@ -132,6 +132,8 @@ export type Database = {
       }
       expiry_dates: {
         Row: {
+          account_email: string
+          account_password: string
           created_at: string
           expiry_date: string
           id: string
@@ -143,6 +145,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_email?: string
+          account_password?: string
           created_at?: string
           expiry_date?: string
           id?: string
@@ -154,6 +158,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_email?: string
+          account_password?: string
           created_at?: string
           expiry_date?: string
           id?: string
